@@ -1,0 +1,14 @@
+{
+    "project": {
+        "name": "Project",
+        "description": "Soft Description",
+        "version": "1.0.0",
+        "godot-version": "4.4"
+    },
+    "plugins": [
+        {
+            "repository": "https://github.com/ramokz/phantom-camera",
+            "version": "v0.8"
+        }
+    ]
+}
