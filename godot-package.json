@@ -3,7 +3,7 @@
         "name": "Project",
         "description": "Soft Description",
         "version": "1.0.0",
-        "godot-version": "4.4"
+        "godotVersion": "4.4"
     },
     "plugins": [
         {
