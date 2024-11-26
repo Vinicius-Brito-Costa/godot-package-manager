@@ -54,7 +54,7 @@ The ```gpm``` will try to access the repository and search for a release with th
 
 Example with a github repository:
 
-**repository:** https://github.com/ramokz/phantom-camera
+**repository:** https://github.com/ramokz/phantom-camera  
 **version:** v0.8
 
 ```
