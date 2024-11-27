@@ -3,7 +3,6 @@ package cmd
 import (
 	"godot-package-manager/cmd/repository"
 	"godot-package-manager/cmd/util"
-
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +13,6 @@ type Repository interface{
 	Download(name string, version string, destiny string) bool
 }
 
-// getCmd represents the get command
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "A brief description of your command",
@@ -29,12 +27,12 @@ to quickly create a Cobra application.`,
 		for _, arg := range args {
 			util.Info("Arg: " + arg)
 		}
-		getGodotPlugins()
+		getGodotPlugins(".")
 	},
 }
 
-func getGodotPlugins() {
-	var gp util.GodotPackage = *util.GetGodotPackage("./godot-package.json")
+func getGodotPlugins(folder string) {
+	var gp util.GodotPackage = *util.GetGodotPackage(folder + "/godot-package.json")
 	util.Info("Downloading plugins...")
 	for i := range gp.Plugins {
 		util.Info("Plugin: " + gp.Plugins[i].Repository + " Version: " + gp.Plugins[i].Version)
@@ -44,6 +42,8 @@ func getGodotPlugins() {
 		}
 	}
 }
+
+func checkPluginDependencies(){}
 
 func init() {
 	rootCmd.AddCommand(installCmd)

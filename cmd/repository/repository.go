@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
+	copyUtil "godot-package-manager/cmd/copy"
 	"godot-package-manager/cmd/util"
 	"io"
 	"net/http"
@@ -17,7 +18,7 @@ const GITLAB string = "gitlab"
 
 type Github struct {}
 
-func (g Github) Download(name string, version string, destiny string) bool {
+func (g Github) Download(name string, version string, destiny string) (bool) {
 	if len(name) == 0 || len(version) == 0 {
 		util.Info("Cannot download. Name or Version missing. Name: " + name + " Version: " + version)
 		return false
@@ -49,8 +50,13 @@ func (g Github) Download(name string, version string, destiny string) bool {
 		return false
     }
 
+	var folderWithFiles string = ""
     // Read all the files from zip archive
     for _, zipFile := range zipReader.File {
+		if !zipFile.FileInfo().IsDir() && (len(folderWithFiles) == 0 || folderWithFiles > filepath.Dir(zipFile.Name)) {
+			folderWithFiles = filepath.Dir(zipFile.Name)
+		}
+
         err := extract(zipFile, destiny)
         if err != nil {
             util.Error(err.Error(), err)
@@ -58,6 +64,11 @@ func (g Github) Download(name string, version string, destiny string) bool {
         }
     }
 
+	util.Info("Folder with files: " + folderWithFiles)
+	var split = strings.Split(folderWithFiles, string(os.PathSeparator))
+	util.Info(destiny + string(os.PathSeparator) + split[len(split) - 1])
+	copyUtil.Dir(destiny + string(os.PathSeparator) + folderWithFiles, destiny + string(os.PathSeparator) + split[len(split) - 1])
+	os.RemoveAll(destiny + string(os.PathSeparator) + split[0])
 	return true
 }
 
@@ -74,7 +85,7 @@ func extract(f *zip.File, dest string) error {
 	if !strings.HasPrefix(path, filepath.Clean(dest) + string(os.PathSeparator)) {
 		return fmt.Errorf("Illegal file path: %s", path)
 	}
-
+	
 	if f.FileInfo().IsDir() {
 		os.MkdirAll(path, f.Mode())
 	} else {
