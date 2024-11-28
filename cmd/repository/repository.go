@@ -13,8 +13,13 @@ import (
 	"strings"
 )
 
-const GITHUB string = "github"
-const GITLAB string = "gitlab"
+var repositories = map[string]Repository{
+	"github": Github{},
+}
+
+type Repository interface {
+	Download(name string, version string, destiny string) bool
+}
 
 type Github struct {}
 
@@ -23,7 +28,7 @@ func (g Github) Download(name string, version string, destiny string) (bool) {
 		util.Info("Cannot download. Name or Version missing. Name: " + name + " Version: " + version)
 		return false
 	}
-	var url = name + "/archive/refs/tags/" + version + ".zip"
+	var url = "https://github.com/" + name + "/archive/refs/tags/" + version + ".zip"
 
 	response, err := http.Get(url)
 
@@ -64,9 +69,9 @@ func (g Github) Download(name string, version string, destiny string) (bool) {
         }
     }
 
-	util.Info("Folder with files: " + folderWithFiles)
+	util.Trace("Folder with files: " + folderWithFiles)
+	
 	var split = strings.Split(folderWithFiles, string(os.PathSeparator))
-	util.Info(destiny + string(os.PathSeparator) + split[len(split) - 1])
 	copyUtil.Dir(destiny + string(os.PathSeparator) + folderWithFiles, destiny + string(os.PathSeparator) + split[len(split) - 1])
 	os.RemoveAll(destiny + string(os.PathSeparator) + split[0])
 	return true
@@ -102,4 +107,8 @@ func extract(f *zip.File, dest string) error {
 		}
 	}
 	return nil
+}
+
+func GetRepository(repo string) Repository {
+	return repositories[repo]
 }

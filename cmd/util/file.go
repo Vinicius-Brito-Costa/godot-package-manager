@@ -14,6 +14,7 @@ type GPProject struct {
 }
 type GPPlugin struct {
 	Repository string;
+	Name string;
 	Version string;
 }
 type GodotPackage struct {
@@ -25,7 +26,7 @@ func getFile(path string) (*os.File, error){
 	if len(path) == 0 {
 		return nil, errors.New("Cannot load file from a blank path.")
 	}
-	Info("Getting file in path: " + path)
+	Trace("Getting file in path: " + path)
 	file, err := os.Open(path)
 	if err != nil {
 		Error("Error trying to load file in path: " + path, err)

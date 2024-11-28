@@ -9,7 +9,7 @@ import (
 const REPO = "repo: "
 const VERSION = "version: "
 
-type Repository interface{
+type Repository interface {
 	Download(name string, version string, destiny string) bool
 }
 
@@ -33,12 +33,12 @@ to quickly create a Cobra application.`,
 
 func getGodotPlugins(folder string) {
 	var gp util.GodotPackage = *util.GetGodotPackage(folder + "/godot-package.json")
-	util.Info("Downloading plugins...")
+	util.Trace("Downloading plugins...")
 	for i := range gp.Plugins {
-		util.Info("Plugin: " + gp.Plugins[i].Repository + " Version: " + gp.Plugins[i].Version)
-		var github repository.Github = repository.Github{}
-		if github.Download(gp.Plugins[i].Repository, gp.Plugins[i].Version, "./addons") {
-			util.Info("Finished downloading " + gp.Plugins[i].Repository)
+		util.Info(gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)
+		var repo Repository = repository.GetRepository(gp.Plugins[i].Repository)
+		if !repo.Download(gp.Plugins[i].Name, gp.Plugins[i].Version, "./addons") {
+			util.Info("Cannot download " + gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)
 		}
 	}
 }
