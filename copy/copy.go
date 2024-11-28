@@ -1,7 +1,7 @@
 package file
 
 import (
-	"godot-package-manager/cmd/util"
+	"godot-package-manager/util"
 	"io"
 	"io/fs"
 	"os"
@@ -34,6 +34,7 @@ func File(src, dst string) error {
 	return os.Chmod(dst, srcinfo.Mode())
 }
 
+// Dir copies a whole folder and it's files
 func Dir(src string, dst string) error {
 	var err error
 	var fds []fs.DirEntry

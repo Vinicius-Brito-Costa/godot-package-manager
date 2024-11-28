@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+const CONFIG_FILE = "config.json"
+
 type LoggingConfiguration struct {
 	Level string
 }
@@ -24,7 +26,7 @@ func GetLoggingConfig() *LoggingConfiguration {
 }
 
 func load() (*Configuration, error) {
-	var file, err = os.Open("./config.json")
+	var file, err = os.Open("." + string(os.PathSeparator) + CONFIG_FILE)
 	if err != nil {
 		fmt.Println("error: ", err)
 		return nil, err
