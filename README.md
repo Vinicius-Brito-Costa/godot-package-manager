@@ -50,11 +50,12 @@ This will remove the dependency from the ```addons``` folder and remove it in th
 
 ## How does it work
 
-The ```gpm``` will try to access the repository and search for a release with the version.
+The ```gpm``` will try to access the repository with the given name and search for a release with the version.
 
 Example with a github repository:
 
-**repository:** https://github.com/ramokz/phantom-camera  
+**repository:** github  
+**name:** ramokz/phantom-camera 
 **version:** v0.8
 
 ```
