@@ -55,7 +55,7 @@ The ```gpm``` will try to access the repository with the given name and search f
 Example with a github repository:
 
 **repository:** github  
-**name:** ramokz/phantom-camera 
+**name:** ramokz/phantom-camera  
 **version:** v0.8
 
 ```
