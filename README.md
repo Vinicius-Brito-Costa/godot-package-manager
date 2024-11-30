@@ -27,7 +27,7 @@ gpm init
 To add a dependency in the ```godot-package.json``` run the following command on the root of your directory:
 
 ```shell
-gpm add repository version
+gpm add repository name version
 ```
 
 ### Installing dependencies
@@ -43,7 +43,7 @@ It will install your dependencies on the ```addons``` folder and enable it in th
 Removing dependencies is as easy as installing, run the following command on the root directory of your godot project:
 
 ```shell
-gpm remove dependency-repository
+gpm remove name
 ```
 
 This will remove the dependency from the ```addons``` folder and remove it in the settings.
