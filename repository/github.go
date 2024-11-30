@@ -3,6 +3,7 @@ package repository
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"fmt"
 	copyUtil "godot-package-manager/copy"
 	"godot-package-manager/util"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 )
 
 type Github struct{}
@@ -20,29 +22,12 @@ func (g Github) Download(name string, version string, destiny string) bool {
 		util.Info("Cannot download. Name or Version missing. Name: " + name + " Version: " + version)
 		return false
 	}
-	var url = "https://github.com/" + name + "/archive/refs/tags/" + version + ".zip"
 
-	var response, err = http.Get(url)
+	var response, err = getUntil(name, version)
 
 	if err != nil {
 		util.Error(err.Error(), err)
 		return false
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != 200 {
-		//https://github.com/Burloe/GoLogger/releases/download/1.2/GoLogger-1.2.zip
-		var splitedName = strings.Split(name, "/")
-		url = "https://github.com/" + name + "/releases/download/" + version + "/" + splitedName[len(splitedName)-1] + "-" + version + ".zip"
-		response, err = http.Get(url)
-		if err != nil {
-			util.Error(err.Error(), err)
-			return false
-		}
-		if response.StatusCode != 200 {
-			util.Info("GET request on " + url + " failed.")
-			return false
-		}
 	}
 
 	body, err := io.ReadAll(response.Body)
@@ -120,4 +105,49 @@ func extract(f *zip.File, dest string) error {
 		}
 	}
 	return nil
+}
+
+type UrlTemplate struct {
+	Name string
+	Version string
+	Package string
+}
+var URL_TEMPLATES []string = []string{
+	"https://github.com/{{.Name}}/archive/refs/tags/{{.Version}}.zip",
+	"https://github.com/{{.Name}}/releases/download/{{.Version}}/{{.Package}}-{{.Version}}.zip",
+}
+
+// This will loop over the URL_TEMPLATES looking for a positive. If it cannot find anything, will return error.
+func getUntil(name string, version string) (*http.Response, error) {
+	// Dinamically getting package name using the name. Don't know if this is the best choice.
+	var splitedName = strings.Split(name, "/")
+	var urlTmpl UrlTemplate = UrlTemplate{name, version, splitedName[len(splitedName)-1]}
+	var responseErr error
+	for index, url := range URL_TEMPLATES {
+		var tmpl, tmplErr = template.New("temp-tmpl-" + string(index)).Parse(url)
+		if tmplErr != nil {
+			util.Trace("Cannot parse template (" + url + "). Err: " + tmplErr.Error())
+			responseErr = tmplErr
+			continue
+		}
+
+		var buff bytes.Buffer
+		tmpl.Execute(&buff, urlTmpl)
+		resp, reqErr := http.Get(buff.String())
+
+		if reqErr != nil {
+			util.Trace("Cannot download with url (" + buff.String() + "). Err: " + reqErr.Error())
+			responseErr = reqErr
+			continue
+		}
+
+		if resp.StatusCode != 200 {
+			util.Trace("GET request on " + buff.String() + " failed. Status: " + resp.Status)
+			responseErr = errors.New("GET request on " + buff.String() + " failed.")
+			continue
+		}
+		responseErr = nil
+		return resp, responseErr
+	}
+	return &http.Response{}, responseErr
 }
