@@ -15,7 +15,6 @@ var config = GetLoggingConfig()
 var level string = ""
 
 func Info(str string){
-	getLevel()
 	if len(str) > 0 {
 		log.Println("[INFO][" + TRACE_ID + "=" + ID + "] " + str)
 	}
@@ -33,18 +32,25 @@ func Error(str string, err error){
 }
 
 func Warn(str string){
-	if len(str) > 0 && slices.Contains(WARN_LIST, getLevel()) {
+	if len(str) > 0 && slices.Contains(WARN_LIST, GetLogLevel()) {
 		log.Println("[WARN][" + TRACE_ID + "=" + ID + "] " + str)
 	}
 }
 
 func Trace(str string){
-	if len(str) > 0 && getLevel() == TRACE{
+	if len(str) > 0 && GetLogLevel() == TRACE{
 		log.Println("[TRACE][" + TRACE_ID + "=" + ID + "] " + str)
 	}
 }
 
-func getLevel() string {
+func SetLogLevel(lvl string) {
+	if len(lvl) > 0 {
+		level = lvl
+		config.Level = lvl
+	}
+}
+
+func GetLogLevel() string {
 	if len(level) == 0{
 		level = config.Level
 	}

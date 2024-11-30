@@ -23,6 +23,8 @@ var installCmd = &cobra.Command{
 It uses the ` + GODOT_PACKAGE + ` file inside your project root folder.
 The installed plugins will be put in the ` + string(os.PathSeparator) + ADDONS + ` root folder.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		util.SetLogLevel(level)
+		util.Info("Log level set to: " + util.GetLogLevel())
 		util.Info("Installing all dependencies...")
 		getGodotPlugins(".")
 	},

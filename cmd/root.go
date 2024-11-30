@@ -5,6 +5,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const LOG_LEVEL_FLAG = "log-level"
+const logLevelDescription = `Changes log level. Available:
+	info	default
+	warn
+	trace
+`
 var rootCmd = &cobra.Command{
 	Use:   "gpm",
 	Short: "Godot Package Manager",
@@ -12,12 +18,16 @@ var rootCmd = &cobra.Command{
 	Version: "0.0.1",
 
 }
+var level string 
 
 func Execute() {
-
+	
 	rootCmd.CompletionOptions.DisableDefaultCmd = true  
+	rootCmd.PersistentFlags().StringVar(&level, LOG_LEVEL_FLAG, "", logLevelDescription)
 
+	
 	err := rootCmd.Execute()
+
 	if err != nil {
 		os.Exit(1)
 	}
