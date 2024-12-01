@@ -16,20 +16,26 @@ This file has the following structure:
 ## Commands
 
 ### Init godot-package.json
+> **NOTE:** Init command will only add the packages that have a **```godot-package.json```** inside it with the type property as **```addon```** or **```scripts```**. This could be changed in the future.
 
-This will try to list your current dependencies of the ```addons``` folder (if there's any) and add it to the ```godot-package.json```.
+This will try to list your current dependencies of the ```addons``` folder (if there's any) and add it to the ```godot-package.json```. If there's is no dependencies it will create the ```godot-package.json``` anyway.
 Run the following command on the root of your project:
 ```shell
 gpm init
 ```
 
+Then the CLI will prompt for some information about the project, it will ask for the **name**, **type** and **version** to populate the file.
+
+If the ```godot-package.json``` file exists, it will try to update the dependencies.
+
+---
 ### Add dependencies
 To add a dependency in the ```godot-package.json``` run the following command on the root of your directory:
 
 ```shell
 gpm add repository name version
 ```
-
+---
 ### Installing dependencies
 To install the dependencies listed on the ```godot-package.json``` run the following command on the root of your directory:
 
@@ -39,6 +45,7 @@ gpm install
 
 It will install your dependencies on the ```addons``` folder and enable it in the settings.
 
+---
 ### Removing dependencies
 Removing dependencies is as easy as installing, run the following command on the root directory of your godot project:
 
@@ -47,6 +54,7 @@ gpm remove name
 ```
 
 This will remove the dependency from the ```addons``` folder and remove it in the settings.
+
 
 ## How does it work
 

@@ -1,8 +1,10 @@
 {
     "project": {
         "name": "Project",
-        "description": "Soft Description",
+        "type": "game",
         "version": "1.0.0",
+        "repository": "github",
+        "description": "Soft Description",
         "godotVersion": "4.4"
     },
     "plugins": [

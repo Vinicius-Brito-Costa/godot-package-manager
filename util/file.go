@@ -4,22 +4,26 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/fs"
 	"os"
 )
 type GPProject struct {
-	Name string;
-	Description string;
-	Version string;
-	GodotVersion string;
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Version string `json:"version"`
+	Repository string `json:"repository"`
+	Description string `json:"description"`
+	GodotVersion string `json:"godotVersion"`
 }
 type GPPlugin struct {
-	Repository string;
-	Name string;
-	Version string;
+	Repository string `json:"repository"`
+	Name string `json:"name"`
+	Version string `json:"version"`
 }
 type GodotPackage struct {
-	Project GPProject;
-	Plugins []GPPlugin;
+	Project GPProject `json:"project"`
+	Plugins []GPPlugin `json:"plugins"`
 }
 
 func getFile(path string) (*os.File, error){
@@ -74,3 +78,30 @@ func GetGodotPackage(path string) (*GodotPackage) {
 	return &gp
 }
 
+func LoadGodotPackagesFromDirectory(dir string, godotPackageName string) *[]GodotPackage{
+	files, err := fs.Glob(os.DirFS(dir), "**/" + godotPackageName)
+	if err != nil {
+		return &[]GodotPackage{}
+	}
+
+	var pluginsGodotPackage []GodotPackage = []GodotPackage{}
+	for _, file := range files {
+		Trace("File: " + file)
+		pluginsGodotPackage = append(pluginsGodotPackage, *GetGodotPackage(dir + "/" + file))
+	}
+
+	Trace("Number of plugins: " + fmt.Sprint(len(pluginsGodotPackage)))
+
+	return &pluginsGodotPackage
+}
+
+func WriteToFile(path string, data []byte) bool {
+
+    var err = os.WriteFile(path, data, 0644)
+    if err != nil {
+        Error(err.Error(), err)
+		return false
+    }
+
+	return true
+}
