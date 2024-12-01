@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"godot-package-manager/util"
+	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -34,18 +38,31 @@ func executeInitCommand(cmd *cobra.Command, args []string) {
 	if len(name) == 0 || len(projectType) == 0 || len(version) == 0 {
 		util.Trace("Cannot locate flags, trying to load info from arguments.")
 		if len(args) < 3 {
-			util.Info("Cannot init project, no arguments provided")
-			return
-		}
-		for index, arg := range args {
-			if index == 0 {
-				name = arg
-			}
-			if index == 1 {
-				projectType = arg
-			}
-			if index == 2 {
-				version = arg
+			util.Trace("Cannot init project, no arguments provided. Prompting the user...")
+			
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("Project name: ")
+			name, _ = reader.ReadString('\n')
+			name = strings.TrimSpace(name)
+			fmt.Print("Project type: ")
+			reader = bufio.NewReader(os.Stdin)
+			projectType, _ = reader.ReadString('\n')
+			projectType = strings.TrimSpace(projectType)
+			fmt.Print("Project version: ")
+			reader = bufio.NewReader(os.Stdin)
+			version, _ = reader.ReadString('\n')
+			version = strings.TrimSpace(version)
+		} else {
+			for index, arg := range args {
+				if index == 0 {
+					name = arg
+				}
+				if index == 1 {
+					projectType = arg
+				}
+				if index == 2 {
+					version = arg
+				}
 			}
 		}
 	}
