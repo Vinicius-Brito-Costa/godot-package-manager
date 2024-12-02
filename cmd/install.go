@@ -10,8 +10,6 @@ import (
 
 const REPO = "repo: "
 const VERSION = "version: "
-const GODOT_PACKAGE = "godot-package.json"
-const ADDONS = "addons"
 
 type Repository interface {
 	Download(name string, version string, destiny string) bool
@@ -26,13 +24,18 @@ The installed plugins will be put in the ` + string(os.PathSeparator) + ADDONS +
 	Run: func(cmd *cobra.Command, args []string) {
 		util.SetLogLevel(level)
 		util.Trace("Log level set to: " + util.GetLogLevel())
-		util.Info("Installing all dependencies...")
+		util.Trace("Installing all dependencies...")
 		executeInstallCommand(".")
 	},
 }
 
 func executeInstallCommand(folder string) {
-	var gp util.GodotPackage = *util.GetGodotPackage(folder + string(os.PathSeparator) + GODOT_PACKAGE)
+	var gp, err = util.GetGodotPackage(folder + string(os.PathSeparator) + GODOT_PACKAGE)
+	if err != nil {
+		util.Info("Cannot install.")
+		return
+	}
+
 	util.Trace("Downloading plugins...")
 	for i := range gp.Plugins {
 		util.Info(gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)

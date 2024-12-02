@@ -33,7 +33,7 @@ If the ```godot-package.json``` file exists, it will try to update the dependenc
 To add a dependency in the ```godot-package.json``` run the following command on the root of your directory:
 
 ```shell
-gpm add repository name version
+gpm add name repository version
 ```
 ---
 ### Installing dependencies

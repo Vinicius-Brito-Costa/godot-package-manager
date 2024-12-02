@@ -39,13 +39,13 @@ func getFile(path string) (*os.File, error){
 	return file, nil
 }
 
-func GetGodotPackage(path string) (*GodotPackage) {
+func GetGodotPackage(path string) (*GodotPackage, error) {
 	file, err := getFile(path)
 	defer file.Close()
 
 	if err != nil {
 		Error(err.Error(), err)
-		return nil
+		return &GodotPackage{}, err
 	}
 
 
@@ -63,7 +63,7 @@ func GetGodotPackage(path string) (*GodotPackage) {
 
 	if len(fileData) == 0 {
 		Info("Cannot load file data.")
-		return nil
+		return &GodotPackage{}, errors.New("Cannot load file data.")
 	}
 
 	var gp GodotPackage
@@ -72,10 +72,10 @@ func GetGodotPackage(path string) (*GodotPackage) {
 
 	if err != nil {
 		Error(err.Error(), err)
-		return nil
+		return &GodotPackage{}, err
 	}
 
-	return &gp
+	return &gp, nil
 }
 
 func LoadGodotPackagesFromDirectory(dir string, godotPackageName string) *[]GodotPackage{
@@ -87,7 +87,11 @@ func LoadGodotPackagesFromDirectory(dir string, godotPackageName string) *[]Godo
 	var pluginsGodotPackage []GodotPackage = []GodotPackage{}
 	for _, file := range files {
 		Trace("File: " + file)
-		pluginsGodotPackage = append(pluginsGodotPackage, *GetGodotPackage(dir + "/" + file))
+		gp, err := GetGodotPackage(dir + "/" + file)
+		if err != nil {
+			continue
+		}
+		pluginsGodotPackage = append(pluginsGodotPackage, *gp)
 	}
 
 	Trace("Number of plugins: " + fmt.Sprint(len(pluginsGodotPackage)))

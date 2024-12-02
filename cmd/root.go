@@ -4,7 +4,8 @@ import (
 	"os"
 	"github.com/spf13/cobra"
 )
-
+const GODOT_PACKAGE = "godot-package.json"
+const ADDONS = "addons"
 const LOG_LEVEL_FLAG = "log-level"
 const logLevelDescription = `Changes log level. Available:
 	info	default

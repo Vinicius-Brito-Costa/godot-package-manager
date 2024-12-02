@@ -21,7 +21,7 @@ Next it search for dependencies on the addons folder.
 	Run: func(cmd *cobra.Command, args []string) {
 		util.SetLogLevel(level)
 		util.Trace("Log level set to: " + util.GetLogLevel())
-		util.Info("Initiating the project...")
+		util.Trace("Initiating the project...")
 		executeInitCommand(cmd, args)
 	},
 }
@@ -80,9 +80,8 @@ func executeInitCommand(cmd *cobra.Command, args []string) {
 
 	godotPackageBytes := new(bytes.Buffer)
 	json.NewEncoder(godotPackageBytes).Encode(godotPackage)
-
-	godotPackageBytes.Bytes() // this is the []byte
 	util.WriteToFile("./"+GODOT_PACKAGE, godotPackageBytes.Bytes())
+	util.Info(GODOT_PACKAGE + " created.")
 }
 
 // Get flag as string, if any error occuors it will return an empty string
