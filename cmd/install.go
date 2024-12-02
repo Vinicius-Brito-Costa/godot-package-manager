@@ -39,7 +39,7 @@ func executeInstallCommand(folder string) {
 
 	logger.Trace("Downloading plugins...")
 	for i := range gp.Plugins {
-		logger.Info(gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)
+		logger.Info("installing " + gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)
 		var repo Repository = repository.GetRepository(gp.Plugins[i].Repository)
 		if !repo.Download(gp.Plugins[i].Name, gp.Plugins[i].Version, "."+string(os.PathSeparator)+ADDONS) {
 			logger.Info("Cannot download " + gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)

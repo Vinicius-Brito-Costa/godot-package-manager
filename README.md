@@ -14,6 +14,8 @@ With this you can eliminate the bloat of the addons folder on your repository an
   - [Installing dependencies](#installing-dependencies)
   - [Removing dependencies](#removing-dependencies)
 - [How does it work](#how-does-it-work)
+- [FAQ](#faq)
+  - [Where's the logging folder located?](#wheres-the-logging-folder-located)
 
 ## <a name="build-and-install"></a>Build and install
 
@@ -128,3 +130,8 @@ GET https://github.com/ramokz/phantom-camera/archive/refs/tags/v0.8.zip
 Next it will unzip it and try to locate an ```addons``` folder, if it cannot find it, it will search for ```plugin.cfg``` to locate the folder in which the addon is.
 
 Then it will add it to the project ```addons``` folder and enable it in the Settings.
+
+## <a name="faq"></a>FAQ
+
+### <a name="wheres-the-logging-folder-located"></a>Where's the logging folder located?
+You can find the log files in `username/.godot-package-manager/`

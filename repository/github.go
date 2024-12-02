@@ -143,11 +143,15 @@ func getUntil(name string, version string) (*http.Response, error) {
 		}
 
 		if resp.StatusCode != 200 {
-			logger.Trace("GET request on " + buff.String() + " failed. Status: " + resp.Status)
+			logger.Warn("GET request on " + buff.String() + " failed. Status: " + resp.Status)
+			if index < len(URL_TEMPLATES) {
+				logger.Trace("Trying to GET on the next template. " + URL_TEMPLATES[index + 1])
+			}
 			responseErr = errors.New("GET request on " + buff.String() + " failed.")
 			continue
 		}
 		responseErr = nil
+		logger.Trace("Successfuly downloaded " + name + ":" + version)
 		return resp, responseErr
 	}
 	return &http.Response{}, responseErr
