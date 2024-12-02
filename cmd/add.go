@@ -58,6 +58,7 @@ func executeAddCommand(cmd *cobra.Command, args []string) {
 	gpBytes := new(bytes.Buffer)
 	json.NewEncoder(gpBytes).Encode(gp)
 	file.WriteToFile(packagePath, gpBytes.Bytes())
+	InstallDependency(addon)
 	logger.Info("Dependency added.")
 }
 

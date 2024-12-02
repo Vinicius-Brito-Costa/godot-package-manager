@@ -39,14 +39,16 @@ func executeInstallCommand(folder string) {
 
 	logger.Trace("Downloading plugins...")
 	for i := range gp.Plugins {
-		logger.Info("installing " + gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)
-		var repo Repository = repository.GetRepository(gp.Plugins[i].Repository)
-		if !repo.Download(gp.Plugins[i].Name, gp.Plugins[i].Version, "."+string(os.PathSeparator)+ADDONS) {
-			logger.Info("Cannot download " + gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)
-		}
+		InstallDependency(gp.Plugins[i])
 	}
 }
-
+func InstallDependency(dep file.GPPlugin) {
+	logger.Info("installing " + dep.Name + ":" + dep.Version)
+	var repo Repository = repository.GetRepository(dep.Repository)
+	if !repo.Download(dep.Name, dep.Version, "."+string(os.PathSeparator)+ADDONS) {
+		logger.Info("Cannot download " + dep.Name + ":" + dep.Version)
+	}
+}
 // Who knows in the future...
 func checkPluginDependencies() {}
 
