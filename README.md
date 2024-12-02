@@ -1,14 +1,44 @@
-# Godot Package Manager (WIP)
+# Godot Package Manager<!-- omit from toc -->
 
 Easy package management for Godot.
 
 With this you can eliminate the bloat of the addons folder on your repository and provide a easy way of managing it.
 
-## Build
+## Index <!-- omit from toc -->
 
-To build this project you will need `go 1.23`
+- [Build and install](#build-and-install)
+- [The godot-package.json file](#the-godot-packagejson-file)
+- [Commands](#commands)
+  - [Init godot-package.json](#init-godot-packagejson)
+  - [Add dependencies](#add-dependencies)
+  - [Installing dependencies](#installing-dependencies)
+  - [Removing dependencies](#removing-dependencies)
+- [How does it work](#how-does-it-work)
 
-## The godot-package.json file
+## <a name="build-and-install"></a>Build and install
+
+> To build this project you will need `go 1.23` or higher.
+
+Just run the following command:
+
+```shell
+go build
+```
+
+Now it should have a `gpm` executable in the folder, you can add it to you path and use it anywhere!
+
+**OR**
+
+You could run the following command to install it into you `go/bin` (that should already be on the path):
+```shell
+go install
+```
+
+**OR**
+
+Just download the executable for your current platform on the [releases](https://github.com/Vinicius-Brito-Costa/godot-package-manager-backup/releases) tab and add it to your path.
+
+## <a name="the-godot-packagejson-file"></a>The godot-package.json file
 
 This file is used to store and manage your dependencies. We need to keep it inside the root directory of the project.
 
@@ -38,9 +68,9 @@ This file has the following structure:
 }
 ```
 
-## Commands
+## <a name="commands"></a>Commands
 
-### Init godot-package.json
+### <a name="init-godot-packagejson"></a>Init godot-package.json
 > **NOTE:** Init command will only add the packages that have a **```godot-package.json```** inside it with the type property as **```addon```** or **```scripts```**. This could be changed in the future.
 
 This will try to list your current dependencies of the ```addons``` folder (if there's any) and add it to the ```godot-package.json```. If there's is no dependencies it will create the ```godot-package.json``` anyway.
@@ -54,14 +84,14 @@ Then the CLI will prompt for some information about the project, it will ask for
 If the ```godot-package.json``` file exists, it will try to update the dependencies.
 
 ---
-### Add dependencies
+### <a name="add-dependencies"></a>Add dependencies
 To add a dependency in the ```godot-package.json``` run the following command on the root of your directory:
 
 ```shell
 gpm add name repository version
 ```
 ---
-### Installing dependencies
+### <a name="installing-dependencies"></a>Installing dependencies
 To install the dependencies listed on the ```godot-package.json``` run the following command on the root of your directory:
 
 ```shell
@@ -71,7 +101,7 @@ gpm install
 It will install your dependencies on the ```addons``` folder and enable it in the settings.
 
 ---
-### Removing dependencies
+### <a name="removing-dependencies"></a>Removing dependencies
 Removing dependencies is as easy as installing, run the following command on the root directory of your godot project:
 
 ```shell
@@ -81,7 +111,7 @@ gpm remove name
 This will remove the dependency from the ```addons``` folder and remove it in the settings.
 
 
-## How does it work
+## <a name="how-dows-it-work"></a>How does it work
 
 The ```gpm``` will try to access the repository with the given name and search for a release with the version.
 
