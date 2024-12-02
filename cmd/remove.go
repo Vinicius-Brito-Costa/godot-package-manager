@@ -58,7 +58,7 @@ func executeRemoveCommand(cmd *cobra.Command, args []string) {
 	json.NewEncoder(gpBytes).Encode(gp)
 	file.WriteToFile(packagePath, gpBytes.Bytes())
 	var splitName []string = strings.Split(name, "/")
-	os.RemoveAll("./" + ADDONS + "/" + splitName[len(splitName)-1])
+	os.RemoveAll("." + string(os.PathSeparator) + ADDONS + string(os.PathSeparator) + splitName[len(splitName)-1])
 	logger.Info("Dependency removed.")
 }
 

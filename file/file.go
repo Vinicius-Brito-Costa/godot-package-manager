@@ -80,7 +80,7 @@ func GetGodotPackage(path string) (*GodotPackage, error) {
 }
 
 func LoadGodotPackagesFromDirectory(dir string, godotPackageName string) *[]GodotPackage {
-	files, err := fs.Glob(os.DirFS(dir), "**/"+godotPackageName)
+	files, err := fs.Glob(os.DirFS(dir), "**" + string(os.PathSeparator) + godotPackageName)
 	if err != nil {
 		return &[]GodotPackage{}
 	}
@@ -88,7 +88,7 @@ func LoadGodotPackagesFromDirectory(dir string, godotPackageName string) *[]Godo
 	var pluginsGodotPackage []GodotPackage = []GodotPackage{}
 	for _, file := range files {
 		logger.Trace("File: " + file)
-		gp, err := GetGodotPackage(dir + "/" + file)
+		gp, err := GetGodotPackage(dir + string(os.PathSeparator) + file)
 		if err != nil {
 			continue
 		}

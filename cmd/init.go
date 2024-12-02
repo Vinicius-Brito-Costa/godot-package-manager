@@ -68,7 +68,7 @@ func executeInitCommand(cmd *cobra.Command, args []string) {
 	godotPackage.Project.Version = version
 	godotPackage.Plugins = []file.GPPlugin{}
 
-	var deps []file.GodotPackage = *file.LoadGodotPackagesFromDirectory("./"+ADDONS, GODOT_PACKAGE)
+	var deps []file.GodotPackage = *file.LoadGodotPackagesFromDirectory("." + string(os.PathSeparator) + ADDONS, GODOT_PACKAGE)
 	for _, dep := range deps {
 		var gpPlugin file.GPPlugin = file.GPPlugin{}
 		gpPlugin.Name = dep.Project.Name
@@ -81,7 +81,7 @@ func executeInitCommand(cmd *cobra.Command, args []string) {
 
 	godotPackageBytes := new(bytes.Buffer)
 	json.NewEncoder(godotPackageBytes).Encode(godotPackage)
-	file.WriteToFile("./"+GODOT_PACKAGE, godotPackageBytes.Bytes())
+	file.WriteToFile("." + string(os.PathSeparator) + GODOT_PACKAGE, godotPackageBytes.Bytes())
 	logger.Info(GODOT_PACKAGE + " created.")
 }
 
