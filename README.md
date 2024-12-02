@@ -24,7 +24,11 @@ With this you can eliminate the bloat of the addons folder on your repository an
 Just run the following command:
 
 ```shell
-go build
+go build # for current os
+env GOOS=windows GOARCH=amd64 go build  # for windows
+env GOOS=windows GOARCH=386 go build  # for windows
+env GOOS=linux GOARCH=arm go build  # for linux
+env GOOS=darwin GOARCH=arm64 go build  # for mac
 ```
 
 Now it should have a `gpm` executable in the folder, you can add it to you path and use it anywhere!
