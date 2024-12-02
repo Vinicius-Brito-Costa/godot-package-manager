@@ -110,7 +110,8 @@ func stringIsEmpty(str string) bool {
 
 func init() {
 	initCmd.SetUsageTemplate(`Usage:
-    gpm init`)
+    gpm init project type version
+    gpm init --name=project --type=game --version=1.0.0`)
 
 	initCmd.Flags().String(INSTALL_CMD_NAME_FLAG, "", "Project name")
 	initCmd.Flags().String(INSTALL_CMD_TYPE_FLAG, "", "Project type")
