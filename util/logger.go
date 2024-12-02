@@ -11,7 +11,6 @@ const TRACE = "trace"
 const WARN = "warn"
 var WARN_LIST []string = []string{ TRACE, WARN }
 var ID string = strings.ReplaceAll(uuid.New().String(), "-", "")
-var config = GetLoggingConfig()
 var level string = ""
 
 func Info(str string){
@@ -46,14 +45,9 @@ func Trace(str string){
 func SetLogLevel(lvl string) {
 	if len(lvl) > 0 {
 		level = lvl
-		config.Level = lvl
 	}
 }
 
 func GetLogLevel() string {
-	if len(level) == 0{
-		level = config.Level
-	}
-
 	return level
 }

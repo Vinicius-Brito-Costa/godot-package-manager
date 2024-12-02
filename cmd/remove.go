@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"godot-package-manager/util"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -55,6 +56,8 @@ func executeRemoveCommand(cmd *cobra.Command, args []string){
 	gpBytes := new(bytes.Buffer)
 	json.NewEncoder(gpBytes).Encode(gp)
 	util.WriteToFile(packagePath, gpBytes.Bytes())
+	var splitName []string = strings.Split(name, "/")
+	os.RemoveAll("./" + ADDONS + "/" + splitName[len(splitName) - 1])
 	util.Info("Dependency removed.")
 }
 
