@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"godot-package-manager/repository"
-	"godot-package-manager/util"
+	"godot-package-manager/gpm/file"
+	"godot-package-manager/gpm/logger"
+	"godot-package-manager/gpm/repository"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -22,26 +23,26 @@ var installCmd = &cobra.Command{
 It uses the ` + GODOT_PACKAGE + ` file inside your project root folder.
 The installed plugins will be put in the ` + string(os.PathSeparator) + ADDONS + ` root folder.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		util.SetLogLevel(level)
-		util.Trace("Log level set to: " + util.GetLogLevel())
-		util.Trace("Installing all dependencies...")
+		logger.SetLogLevel(level)
+		logger.Trace("Log level set to: " + logger.GetLogLevel())
+		logger.Trace("Installing all dependencies...")
 		executeInstallCommand(".")
 	},
 }
 
 func executeInstallCommand(folder string) {
-	var gp, err = util.GetGodotPackage(folder + string(os.PathSeparator) + GODOT_PACKAGE)
+	var gp, err = file.GetGodotPackage(folder + string(os.PathSeparator) + GODOT_PACKAGE)
 	if err != nil {
-		util.Info("Cannot install.")
+		logger.Info("Cannot install.")
 		return
 	}
 
-	util.Trace("Downloading plugins...")
+	logger.Trace("Downloading plugins...")
 	for i := range gp.Plugins {
-		util.Info(gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)
+		logger.Info(gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)
 		var repo Repository = repository.GetRepository(gp.Plugins[i].Repository)
 		if !repo.Download(gp.Plugins[i].Name, gp.Plugins[i].Version, "."+string(os.PathSeparator)+ADDONS) {
-			util.Info("Cannot download " + gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)
+			logger.Info("Cannot download " + gp.Plugins[i].Name + ":" + gp.Plugins[i].Version)
 		}
 	}
 }

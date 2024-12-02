@@ -3,7 +3,8 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
-	"godot-package-manager/util"
+	"godot-package-manager/gpm/file"
+	"godot-package-manager/gpm/logger"
 	"os"
 	"strings"
 
@@ -15,50 +16,50 @@ const REMOVE_CMD_NAME_FLAG = "name"
 var removeCmd = &cobra.Command{
 	Use:   "remove",
 	Short: "Removes a dependency of the project",
-	Long: `Removes the dependency of the project. If the project file does not exist it will do nothing.`,
+	Long:  `Removes the dependency of the project. If the project file does not exist it will do nothing.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		util.SetLogLevel(level)
-		util.Trace("Log level set to: " + util.GetLogLevel())
+		logger.SetLogLevel(level)
+		logger.Trace("Log level set to: " + logger.GetLogLevel())
 		executeRemoveCommand(cmd, args)
 	},
 }
 
-func executeRemoveCommand(cmd *cobra.Command, args []string){
+func executeRemoveCommand(cmd *cobra.Command, args []string) {
 	var packagePath string = "." + string(os.PathSeparator) + GODOT_PACKAGE
-	var gp, err = util.GetGodotPackage(packagePath)
+	var gp, err = file.GetGodotPackage(packagePath)
 	if err != nil {
-		util.Info("Cannot remove.")
+		logger.Info("Cannot remove.")
 		return
 	}
 	var name string = GetFlagAsString(cmd, REMOVE_CMD_NAME_FLAG)
 
 	if len(name) == 0 {
-		util.Trace("Cannot locate flags, trying to load info from arguments.")
+		logger.Trace("Cannot locate flags, trying to load info from arguments.")
 		if len(args) == 0 {
-			util.Trace("Cannot load properties from arguments.")
+			logger.Trace("Cannot load properties from arguments.")
 			return
 		}
 		name = args[0]
 	}
 
-	util.Trace("Removing dependency - Name: " + name)
-	var plugins []util.GPPlugin = []util.GPPlugin{}
+	logger.Trace("Removing dependency - Name: " + name)
+	var plugins []file.GPPlugin = []file.GPPlugin{}
 	for _, plugin := range gp.Plugins {
 		if plugin.Name != name {
 			plugins = append(plugins, plugin)
 		}
 	}
 	if len(plugins) == len(gp.Plugins) {
-		util.Info("Dependency not found.")
+		logger.Info("Dependency not found.")
 		return
 	}
 	gp.Plugins = plugins
 	gpBytes := new(bytes.Buffer)
 	json.NewEncoder(gpBytes).Encode(gp)
-	util.WriteToFile(packagePath, gpBytes.Bytes())
+	file.WriteToFile(packagePath, gpBytes.Bytes())
 	var splitName []string = strings.Split(name, "/")
-	os.RemoveAll("./" + ADDONS + "/" + splitName[len(splitName) - 1])
-	util.Info("Dependency removed.")
+	os.RemoveAll("./" + ADDONS + "/" + splitName[len(splitName)-1])
+	logger.Info("Dependency removed.")
 }
 
 func init() {

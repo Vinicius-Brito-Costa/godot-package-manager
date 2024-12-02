@@ -1,4 +1,4 @@
-module godot-package-manager
+module godot-package-manager/gpm
 
 go 1.23
 

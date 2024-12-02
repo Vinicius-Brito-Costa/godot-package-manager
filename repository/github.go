@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	copyUtil "godot-package-manager/copy"
-	"godot-package-manager/util"
+	"godot-package-manager/gpm/logger"
+	copyUtil "godot-package-manager/gpm/copy"
 	"io"
 	"net/http"
 	"os"
@@ -19,31 +19,31 @@ type Github struct{}
 
 func (g Github) Download(name string, version string, destiny string) bool {
 	if len(name) == 0 || len(version) == 0 {
-		util.Info("Cannot download. Name or Version missing. Name: " + name + " Version: " + version)
+		logger.Info("Cannot download. Name or Version missing. Name: " + name + " Version: " + version)
 		return false
 	}
 
 	var response, err = getUntil(name, version)
 
 	if err != nil {
-		util.Error(err.Error(), err)
+		logger.Error(err.Error(), err)
 		return false
 	}
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		util.Error(err.Error(), err)
+		logger.Error(err.Error(), err)
 		return false
 	}
 
 	zipReader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
 	if err != nil {
-		util.Error(err.Error(), err)
+		logger.Error(err.Error(), err)
 		return false
 	}
 
 	var folderWithFiles string = ""
-	// Read all the files from zip archive
+
 	for _, zipFile := range zipReader.File {
 
 		// Search for the folder that contains the plugin.cfg file
@@ -62,12 +62,12 @@ func (g Github) Download(name string, version string, destiny string) bool {
 
 		err := extract(zipFile, destiny)
 		if err != nil {
-			util.Error(err.Error(), err)
+			logger.Error(err.Error(), err)
 			continue
 		}
 	}
 
-	util.Trace("Folder with files: " + folderWithFiles)
+	logger.Trace("Folder with files: " + folderWithFiles)
 
 	var split = strings.Split(folderWithFiles, string(os.PathSeparator))
 	copyUtil.Dir(destiny+string(os.PathSeparator)+folderWithFiles, destiny+string(os.PathSeparator)+split[len(split)-1])
@@ -108,10 +108,11 @@ func extract(f *zip.File, dest string) error {
 }
 
 type UrlTemplate struct {
-	Name string
+	Name    string
 	Version string
 	Package string
 }
+
 var URL_TEMPLATES []string = []string{
 	"https://github.com/{{.Name}}/archive/refs/tags/{{.Version}}.zip",
 	"https://github.com/{{.Name}}/releases/download/{{.Version}}/{{.Package}}-{{.Version}}.zip",
@@ -126,7 +127,7 @@ func getUntil(name string, version string) (*http.Response, error) {
 	for index, url := range URL_TEMPLATES {
 		var tmpl, tmplErr = template.New("temp-tmpl-" + string(index)).Parse(url)
 		if tmplErr != nil {
-			util.Trace("Cannot parse template (" + url + "). Err: " + tmplErr.Error())
+			logger.Trace("Cannot parse template (" + url + "). Err: " + tmplErr.Error())
 			responseErr = tmplErr
 			continue
 		}
@@ -136,13 +137,13 @@ func getUntil(name string, version string) (*http.Response, error) {
 		resp, reqErr := http.Get(buff.String())
 
 		if reqErr != nil {
-			util.Trace("Cannot download with url (" + buff.String() + "). Err: " + reqErr.Error())
+			logger.Trace("Cannot download with url (" + buff.String() + "). Err: " + reqErr.Error())
 			responseErr = reqErr
 			continue
 		}
 
 		if resp.StatusCode != 200 {
-			util.Trace("GET request on " + buff.String() + " failed. Status: " + resp.Status)
+			logger.Trace("GET request on " + buff.String() + " failed. Status: " + resp.Status)
 			responseErr = errors.New("GET request on " + buff.String() + " failed.")
 			continue
 		}

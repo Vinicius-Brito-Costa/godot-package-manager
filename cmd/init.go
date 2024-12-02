@@ -5,7 +5,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"godot-package-manager/util"
+	"godot-package-manager/gpm/file"
+	"godot-package-manager/gpm/logger"
 	"os"
 	"strings"
 
@@ -19,9 +20,9 @@ var initCmd = &cobra.Command{
 Next it search for dependencies on the addons folder.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		util.SetLogLevel(level)
-		util.Trace("Log level set to: " + util.GetLogLevel())
-		util.Trace("Initiating the project...")
+		logger.SetLogLevel(level)
+		logger.Trace("Log level set to: " + logger.GetLogLevel())
+		logger.Trace("Initiating the project...")
 		executeInitCommand(cmd, args)
 	},
 }
@@ -36,10 +37,10 @@ func executeInitCommand(cmd *cobra.Command, args []string) {
 	var version string = GetFlagAsString(cmd, INSTALL_CMD_VERSION_FLAG)
 
 	if len(name) == 0 || len(projectType) == 0 || len(version) == 0 {
-		util.Trace("Cannot locate flags, trying to load info from arguments.")
+		logger.Trace("Cannot locate flags, trying to load info from arguments.")
 		if len(args) < 3 {
-			util.Trace("Cannot init project, no arguments provided. Prompting the user...")
-			
+			logger.Trace("Cannot init project, no arguments provided. Prompting the user...")
+
 			reader := bufio.NewReader(os.Stdin)
 			fmt.Print("Project name: ")
 			name, _ = reader.ReadString('\n')
@@ -58,37 +59,37 @@ func executeInitCommand(cmd *cobra.Command, args []string) {
 			version = args[2]
 		}
 	}
-	var godotPackage util.GodotPackage = util.GodotPackage{}
-	godotPackage.Project = util.GPProject{}
+	var godotPackage file.GodotPackage = file.GodotPackage{}
+	godotPackage.Project = file.GPProject{}
 	godotPackage.Project.Name = name
 	godotPackage.Project.Type = projectType
 	godotPackage.Project.Description = ""
 	godotPackage.Project.GodotVersion = ""
 	godotPackage.Project.Version = version
-	godotPackage.Plugins = []util.GPPlugin{}
+	godotPackage.Plugins = []file.GPPlugin{}
 
-	var deps []util.GodotPackage = *util.LoadGodotPackagesFromDirectory("./" + ADDONS, GODOT_PACKAGE)
+	var deps []file.GodotPackage = *file.LoadGodotPackagesFromDirectory("./"+ADDONS, GODOT_PACKAGE)
 	for _, dep := range deps {
-		var gpPlugin util.GPPlugin = util.GPPlugin{}
+		var gpPlugin file.GPPlugin = file.GPPlugin{}
 		gpPlugin.Name = dep.Project.Name
 		gpPlugin.Repository = dep.Project.Repository
 		gpPlugin.Version = dep.Project.Version
 		godotPackage.Plugins = append(godotPackage.Plugins, gpPlugin)
 	}
 
-	util.Trace("Creating " + GODOT_PACKAGE + " file with values - Name: " + name + " - Type: " + projectType + " - Version: " + version)
+	logger.Trace("Creating " + GODOT_PACKAGE + " file with values - Name: " + name + " - Type: " + projectType + " - Version: " + version)
 
 	godotPackageBytes := new(bytes.Buffer)
 	json.NewEncoder(godotPackageBytes).Encode(godotPackage)
-	util.WriteToFile("./"+GODOT_PACKAGE, godotPackageBytes.Bytes())
-	util.Info(GODOT_PACKAGE + " created.")
+	file.WriteToFile("./"+GODOT_PACKAGE, godotPackageBytes.Bytes())
+	logger.Info(GODOT_PACKAGE + " created.")
 }
 
 // Get flag as string, if any error occuors it will return an empty string
 func GetFlagAsString(cmd *cobra.Command, flagName string) string {
 	flagValue, err := cmd.Flags().GetString(flagName)
 	if err != nil {
-		util.Trace("Cannot get flag. err: " + err.Error())
+		logger.Trace("Cannot get flag. err: " + err.Error())
 		return ""
 	}
 

@@ -1,7 +1,7 @@
 package file
 
 import (
-	"godot-package-manager/util"
+	"godot-package-manager/gpm/logger"
 	"io"
 	"io/fs"
 	"os"
@@ -57,11 +57,11 @@ func Dir(src string, dst string) error {
 
 		if fd.IsDir() {
 			if err = Dir(srcfp, dstfp); err != nil {
-				util.Info(err.Error())
+				logger.Info(err.Error())
 			}
 		} else {
 			if err = File(srcfp, dstfp); err != nil {
-				util.Info(err.Error())
+				logger.Info(err.Error())
 			}
 		}
 	}
