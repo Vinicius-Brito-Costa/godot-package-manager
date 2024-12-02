@@ -25,7 +25,7 @@ var currentTime = time.Now().Local()
 var logFileName = "gpm_log_" + ip + "_" + currentTime.Format(YYYY_MM_DD) + ".log"
 var WARN_LIST []string = []string{ TRACE, WARN }
 var ID string = strings.ReplaceAll(uuid.New().String(), "-", "")
-var level string = ""
+var level string = "info"
 var gpmFolder string = ""
 
 var infoLog log.Logger = *log.New(os.Stdout, "[INFO][DATE_TIME=", log.Ldate|log.Ltime)
