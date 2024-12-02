@@ -53,17 +53,9 @@ func executeInitCommand(cmd *cobra.Command, args []string) {
 			version, _ = reader.ReadString('\n')
 			version = strings.TrimSpace(version)
 		} else {
-			for index, arg := range args {
-				if index == 0 {
-					name = arg
-				}
-				if index == 1 {
-					projectType = arg
-				}
-				if index == 2 {
-					version = arg
-				}
-			}
+			name = args[0]
+			projectType = args[1]
+			version = args[2]
 		}
 	}
 	var godotPackage util.GodotPackage = util.GodotPackage{}
