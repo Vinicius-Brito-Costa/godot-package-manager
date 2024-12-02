@@ -28,8 +28,8 @@ var ID string = strings.ReplaceAll(uuid.New().String(), "-", "")
 var level string = "info"
 var gpmFolder string = ""
 
-var infoLog log.Logger = *log.New(os.Stdout, "[INFO][DATE_TIME=", log.Ldate|log.Ltime)
-var warnLog log.Logger = *log.New(os.Stdout, "[WARN][DATE_TIME=", log.Ldate|log.Ltime)
+var infoLog log.Logger = *log.New(os.Stdout, "[INFO ][DATE_TIME=", log.Ldate|log.Ltime)
+var warnLog log.Logger = *log.New(os.Stdout, "[WARN ][DATE_TIME=", log.Ldate|log.Ltime)
 var traceLog log.Logger = *log.New(os.Stdout, "[TRACE][DATE_TIME=", log.Ldate|log.Ltime)
 var errorLog log.Logger = *log.New(os.Stderr, "[ERROR][DATE_TIME=", log.Ldate|log.Ltime)
 
