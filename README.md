@@ -4,6 +4,10 @@ Easy package management for Godot.
 
 With this you can eliminate the bloat of the addons folder on your repository and provide a easy way of managing it.
 
+## Build
+
+To build this project you will need `go 1.23`
+
 ## The godot-package.json file
 
 This file is used to store and manage your dependencies. We need to keep it inside the root directory of the project.
