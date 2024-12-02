@@ -10,7 +10,28 @@ This file is used to store and manage your dependencies. We need to keep it insi
 
 This file has the following structure:
 ```json
-
+{
+  "project": {
+    "name": "Project",
+    "type": "game",
+    "version": "1.0.0",
+    "repository": "github",
+    "description": "Soft Description",
+    "godotVersion": "4.4"
+  },
+  "plugins": [
+    {
+      "repository": "github",
+      "name": "ramokz/phantom-camera",
+      "version": "v0.8"
+    },
+    {
+        "repository": "github",
+        "name": "Burloe/GoLogger",
+        "version": "1.2"
+    }
+  ]
+}
 ```
 
 ## Commands
