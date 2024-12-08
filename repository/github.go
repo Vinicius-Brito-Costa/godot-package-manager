@@ -5,8 +5,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"godot-package-manager/gpm/logger"
 	copyUtil "godot-package-manager/gpm/copy"
+	"godot-package-manager/gpm/file/godot"
+	"godot-package-manager/gpm/logger"
 	"io"
 	"net/http"
 	"os"
@@ -70,8 +71,20 @@ func (g Github) Download(name string, version string, destiny string) bool {
 	logger.Trace("Folder with files: " + folderWithFiles)
 
 	var split = strings.Split(folderWithFiles, string(os.PathSeparator))
-	copyUtil.Dir(destiny+string(os.PathSeparator)+folderWithFiles, destiny+string(os.PathSeparator)+split[len(split)-1])
+	var current string = destiny + string(os.PathSeparator) + folderWithFiles
+	var target string = destiny + string(os.PathSeparator) + split[len(split)-1]
+	copyUtil.Dir(current, target)
 	os.RemoveAll(destiny + string(os.PathSeparator) + split[0])
+
+	logger.Trace("Setting the plugin up..")
+	cfg, err := godot.LoadCFGExtension(target + string(os.PathSeparator) + godot.PLUGIN_CFG_FILE)
+	if err != nil {
+		logger.Error("Cannot load "+godot.PLUGIN_CFG_FILE, err)
+		return false
+	}
+
+	logger.Info("Loaded " + cfg.Name)
+	
 	return true
 }
 
@@ -145,7 +158,7 @@ func getUntil(name string, version string) (*http.Response, error) {
 		if resp.StatusCode != 200 {
 			logger.Warn("GET request on " + buff.String() + " failed. Status: " + resp.Status)
 			if index < len(URL_TEMPLATES) {
-				logger.Trace("Trying to GET on the next template. " + URL_TEMPLATES[index + 1])
+				logger.Trace("Trying to GET on the next template. " + URL_TEMPLATES[index+1])
 			}
 			responseErr = errors.New("GET request on " + buff.String() + " failed.")
 			continue
