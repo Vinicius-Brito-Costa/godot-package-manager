@@ -39,10 +39,6 @@ func GetFile(path string, keepNewLines bool) ([]byte, error) {
 		return nil, err
 	}
 
-	if err != nil {
-		logger.Error(err.Error(), err)
-		return nil, err
-	}
 	defer file.Close()
 
 	r := bufio.NewReader(file)

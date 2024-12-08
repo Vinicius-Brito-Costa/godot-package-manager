@@ -83,8 +83,19 @@ func (g Github) Download(name string, version string, destiny string) bool {
 		return false
 	}
 
-	logger.Info("Loaded " + cfg.Name)
-	
+	//logger.Info("Loaded: " + cfg.Name + " Desc: " + cfg.Description)
+	pg, err := godot.LoadGodotProjectFile()
+	if err != nil {
+		logger.Info(pg["teste"]["teste"] + cfg.Name)
+		logger.Error("Cannot load "+godot.GODOT_PROJECT_FILE, err)
+		return false
+	}
+	for projConfigKey, projConfigValue := range pg {
+		logger.Info("Config: " + projConfigKey)
+		if strings.EqualFold(projConfigKey, godot.AUTOLOAD_TAG) {
+			projConfigKey[]
+		}
+	}
 	return true
 }
 
