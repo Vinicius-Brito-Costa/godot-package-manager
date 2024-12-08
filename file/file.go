@@ -28,7 +28,7 @@ type GodotPackage struct {
 	Plugins []GPPlugin `json:"plugins"`
 }
 
-func getFile(path string) (*os.File, error) {
+func GetFile(path string, keepNewLines bool) ([]byte, error) {
 	if len(path) == 0 {
 		return nil, errors.New("Cannot load file from a blank path.")
 	}
@@ -38,38 +38,49 @@ func getFile(path string) (*os.File, error) {
 		logger.Error("Error trying to load file in path: "+path, err)
 		return nil, err
 	}
-	return file, nil
-}
-
-func GetGodotPackage(path string) (*GodotPackage, error) {
-	file, err := getFile(path)
-	defer file.Close()
 
 	if err != nil {
 		logger.Error(err.Error(), err)
-		return &GodotPackage{}, err
+		return nil, err
 	}
+	defer file.Close()
 
 	r := bufio.NewReader(file)
+	var fileData []byte = fileAppender(*r, keepNewLines)
+
+	if len(fileData) == 0 {
+		logger.Info("Cannot load file data.")
+		return nil, errors.New("Cannot load file data.")
+	}
+	return fileData, nil
+}
+
+func fileAppender(reader bufio.Reader, addLines bool) []byte {
 	var fileData []byte
 	for {
-		line, _, err := r.ReadLine()
+		line, _, err := reader.ReadLine()
 		if len(line) > 0 {
 			fileData = append(fileData, line...)
+		}
+		if addLines {
+			fileData = append(fileData, []byte("\n")...)
 		}
 		if err != nil {
 			break
 		}
 	}
+	return fileData
+}
+func GetGodotPackage(path string) (*GodotPackage, error) {
+	file, err := GetFile(path, false)
 
-	if len(fileData) == 0 {
-		logger.Info("Cannot load file data.")
-		return &GodotPackage{}, errors.New("Cannot load file data.")
+	if err != nil {
+		return nil, err
 	}
 
 	var gp GodotPackage
 
-	err = json.Unmarshal(fileData, &gp)
+	err = json.Unmarshal(file, &gp)
 
 	if err != nil {
 		logger.Error(err.Error(), err)
@@ -80,7 +91,7 @@ func GetGodotPackage(path string) (*GodotPackage, error) {
 }
 
 func LoadGodotPackagesFromDirectory(dir string, godotPackageName string) *[]GodotPackage {
-	files, err := fs.Glob(os.DirFS(dir), "**" + string(os.PathSeparator) + godotPackageName)
+	files, err := fs.Glob(os.DirFS(dir), "**"+string(os.PathSeparator)+godotPackageName)
 	if err != nil {
 		return &[]GodotPackage{}
 	}
