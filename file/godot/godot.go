@@ -13,6 +13,8 @@ const AUTOLOAD_TAG = "[autoload]"
 const PLUGIN_TAG = "[plugin]"
 const PLUGIN_CFG_FILE = "plugin.cfg"
 const GODOT_PROJECT_FILE = "project.godot"
+const GODOT_PLUGIN_RES_PATH = "*res://"
+const GODOT_PATH_SEPARATOR = "/"
 
 type PluginConfig struct {
 	Name        string
@@ -57,6 +59,29 @@ func LoadGodotProjectFile() (map[string]map[string]string, error) {
 func SaveGodotProjectFile(godotProject map[string]map[string]string) {
 
 }
+
+func ActivatePluginOnProject(pluginFolderPath string) bool {
+	logger.Trace("Setting the plugin up..")
+	logger.Info(pluginFolderPath)
+	cfg, err := LoadCFGExtension(pluginFolderPath + string(os.PathSeparator) + PLUGIN_CFG_FILE)
+	if err != nil {
+		logger.Error("Cannot load "+PLUGIN_CFG_FILE, err)
+		return false
+	}
+
+	gp, err := LoadGodotProjectFile()
+	if err != nil {
+		logger.Error("Cannot load "+GODOT_PROJECT_FILE, err)
+		return false
+	}
+	if gp[AUTOLOAD_TAG] != nil {
+		gp[AUTOLOAD_TAG][cfg.Name] = GODOT_PLUGIN_RES_PATH + strings.ReplaceAll(strings.ReplaceAll(pluginFolderPath, "." + string(os.PathSeparator), ""), string(os.PathSeparator), GODOT_PATH_SEPARATOR) + GODOT_PATH_SEPARATOR + cfg.Script
+	}
+	logger.Info(AUTOLOAD_TAG + " : " + gp[AUTOLOAD_TAG][cfg.Name])
+	
+	return false
+}
+
 func LoadCFGExtension(path string) (PluginConfig, error) {
 	file, err := file.GetFile(path, true)
 
@@ -81,6 +106,7 @@ func LoadCFGExtension(path string) (PluginConfig, error) {
 			continue
 		}
 		kv[0] = strings.TrimSpace(kv[0])
+		kv[1] = strings.ReplaceAll(kv[1], "\"", "")
 		logger.Trace("Key: " + kv[0] + " -  Value: " + kv[1])
 		if strings.EqualFold(kv[0], "Name") && len(kv[1]) > 0 {
 			config.Name = kv[1]
