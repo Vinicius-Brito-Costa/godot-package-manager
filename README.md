@@ -3,6 +3,7 @@
 Easy package management for Godot.
 
 With this you can eliminate the bloat of the addons folder on your repository and provide a easy way of managing it.
+> Do not run `gpm` with Godot opened, close Godot run your commands then start it again.
 
 ## Index <!-- omit from toc -->
 
