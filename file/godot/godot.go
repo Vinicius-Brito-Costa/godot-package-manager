@@ -10,11 +10,22 @@ import (
 )
 
 const AUTOLOAD_TAG = "[autoload]"
+const EDITOR_PLUGINS_TAG = "[editor_plugins]"
 const PLUGIN_TAG = "[plugin]"
 const PLUGIN_CFG_FILE = "plugin.cfg"
 const GODOT_PROJECT_FILE = "project.godot"
 const GODOT_PLUGIN_RES_PATH = "*res://"
 const GODOT_PATH_SEPARATOR = "/"
+const COMMENT_PREFIX = ";"
+const BREAK_LINE = "\n"
+
+const KEY_VALUE string = "key-value"
+const TAG string = "tag"
+const UNMAPPED string = "unmapped"
+const EMPTY string = "empty"
+const COMMENT string = "comment"
+
+const PACKED_STRING_ARRAY_START string = "enabled=PackedStringArray("
 
 type PluginConfig struct {
 	Name        string
@@ -25,63 +36,188 @@ type PluginConfig struct {
 	ActivateNow bool
 }
 
-func LoadGodotProjectFile() (map[string]map[string]string, error) {
+type LinkedList struct {
+	NextNode     *LinkedList
+	PreviousNode *LinkedList
+	Data         string
+	Metadata     []string
+}
+
+func LoadGodotProjectFile() (LinkedList, error) {
 
 	fileData, err := file.GetFile("."+string(os.PathSeparator)+GODOT_PROJECT_FILE, true)
 	if err != nil {
 		logger.Trace("Cannot load " + GODOT_PROJECT_FILE)
-		return nil, err
+		return LinkedList{}, err
 	}
 
-	var mappedValues map[string]map[string]string = make(map[string]map[string]string)
+	var mappedValues *LinkedList = new(LinkedList)
+	var head = mappedValues
 	var currentConfigTag string = ""
-	for _, line := range strings.Split(string(fileData), "\n") {
-		if strings.HasPrefix(line, ";"){
-			continue
+	var lineCount int = len(strings.Split(string(fileData), BREAK_LINE))
+	for i, line := range strings.Split(string(fileData), BREAK_LINE) {
+		if strings.HasPrefix(line, COMMENT_PREFIX) {
+			mappedValues.Metadata = []string{COMMENT}
+		} else if isTag(line) && len(strings.TrimSpace(line)) > 2 {
+			currentConfigTag = strings.TrimSpace(line)
+			mappedValues.Metadata = []string{currentConfigTag, TAG}
+		} else if len(currentConfigTag) > 0 && isKeyValue(line) {
+			mappedValues.Metadata = []string{currentConfigTag, KEY_VALUE}
+		} else if len(currentConfigTag) == 0 {
+			mappedValues.Metadata = []string{currentConfigTag, UNMAPPED}
+		} else {
+			mappedValues.Metadata = []string{currentConfigTag, EMPTY}
 		}
-		if isTag(line) && len(strings.TrimSpace(line)) > 2 {
-			currentConfigTag = line
-		}
-		if len(currentConfigTag) > 0 && isKeyValue(line) {
-			var kv []string = strings.SplitN(line, "=", 2)
-			if len(kv) > 1 {
-				if mappedValues[currentConfigTag] == nil {
-					mappedValues[currentConfigTag] = make(map[string]string)
-				}
-				mappedValues[currentConfigTag][kv[0]] = kv[1]
-			}
+		mappedValues.Data = line
+		if i < lineCount-1 {
+			mappedValues.NextNode = new(LinkedList)
+			mappedValues.NextNode.PreviousNode = mappedValues
+			mappedValues = mappedValues.NextNode
 		}
 	}
 
-	return mappedValues, nil
+	return *head, nil
 }
 
-func SaveGodotProjectFile(godotProject map[string]map[string]string) {
+func SaveGodotProjectFile(godotProject *LinkedList) bool {
+	var data string = ""
+	continueLoop := true
+	for continueLoop {
+		data += godotProject.Data + BREAK_LINE
+		if godotProject.NextNode != nil {
+			godotProject = godotProject.NextNode
+		} else {
+			continueLoop = false
+		}
+	}
+	if !file.WriteToFile("." + string(os.PathSeparator) + GODOT_PROJECT_FILE, []byte(data)) {
+		logger.Trace("Cannot write updates to file...")
+		return false
+	}
 
+	logger.Info("Succesfully updated " + GODOT_PROJECT_FILE)
+
+	return true
 }
 
 func ActivatePluginOnProject(pluginFolderPath string) bool {
-	logger.Trace("Setting the plugin up..")
-	logger.Info(pluginFolderPath)
+	logger.Info("Setting the plugin up..")
+	logger.Trace("Path to plugin: " + pluginFolderPath)
 	cfg, err := LoadCFGExtension(pluginFolderPath + string(os.PathSeparator) + PLUGIN_CFG_FILE)
 	if err != nil {
 		logger.Error("Cannot load "+PLUGIN_CFG_FILE, err)
 		return false
 	}
+	logger.Info("Loaded " + PLUGIN_CFG_FILE)
 
-	gp, err := LoadGodotProjectFile()
+	head, err := LoadGodotProjectFile()
 	if err != nil {
 		logger.Error("Cannot load "+GODOT_PROJECT_FILE, err)
 		return false
 	}
-	if gp[AUTOLOAD_TAG] != nil {
-		gp[AUTOLOAD_TAG][cfg.Name] = GODOT_PLUGIN_RES_PATH + strings.ReplaceAll(strings.ReplaceAll(pluginFolderPath, "." + string(os.PathSeparator), ""), string(os.PathSeparator), GODOT_PATH_SEPARATOR) + GODOT_PATH_SEPARATOR + cfg.Script
+	logger.Info("Loaded " + GODOT_PROJECT_FILE)
+
+	var pluginLine string = "\"" + GODOT_PLUGIN_RES_PATH + strings.ReplaceAll(strings.ReplaceAll(pluginFolderPath, "."+string(os.PathSeparator), ""), string(os.PathSeparator), GODOT_PATH_SEPARATOR) + GODOT_PATH_SEPARATOR + cfg.Script + "\""
+	var pluginLineCfg string = replaceScriptWithCfgFromPath(strings.ReplaceAll(pluginLine, "\"*res", "\"res"))
+	var continueLoop bool = true
+	var root *LinkedList = &head
+	var isAutoloadSet bool = false
+	var isEditorPluginSet bool = false
+	for continueLoop {
+		var tag string = root.Metadata[0]
+		if !strings.EqualFold(tag, root.Data) {
+			if !isAutoloadSet && strings.EqualFold(AUTOLOAD_TAG, tag) {
+				var valueType string = root.Metadata[1]
+				if len(root.Data) == 0 {
+					root.Data = cfg.Name + "=" + pluginLine
+					if root.NextNode != nil && len(root.NextNode.Data) > 0 {
+						root.Data += BREAK_LINE
+					}
+					isAutoloadSet = true
+					logger.Trace("Plugin registered on a blank line in " + AUTOLOAD_TAG)
+				} else if root.NextNode == nil || valueType == TAG {
+					appendPreviousNewNode(root, cfg.Name+"="+pluginLine+BREAK_LINE, []string{AUTOLOAD_TAG, KEY_VALUE})
+					isAutoloadSet = true
+					logger.Trace("Plugin registered on a new line in " + AUTOLOAD_TAG)
+				}
+			}
+
+			if !isEditorPluginSet && strings.EqualFold(EDITOR_PLUGINS_TAG, tag) {
+				var valueType string = root.Metadata[1]
+				if len(root.Data) > 0 {
+					if strings.HasPrefix(root.Data, PACKED_STRING_ARRAY_START) {
+						isEditorPluginSet = true
+						if strings.Contains(root.Data, pluginLineCfg) {
+							logger.Trace("Plugin is already registered on " + EDITOR_PLUGINS_TAG)
+							continue
+						}
+						var currentStringArray []string = getPackedArrayStringContents(root.Data)
+						currentStringArray = append(currentStringArray, pluginLineCfg)
+						root.Data = createPackedArrayString(currentStringArray)
+						logger.Trace("Plugin registered on " + EDITOR_PLUGINS_TAG)
+					}
+
+				} else if root.NextNode == nil || valueType == TAG {
+					appendPreviousNewNode(root, createPackedArrayString([]string{pluginLineCfg})+BREAK_LINE, []string{EDITOR_PLUGINS_TAG, KEY_VALUE})
+					isEditorPluginSet = true
+					logger.Trace("Plugin registered on a new line in " + EDITOR_PLUGINS_TAG)
+				}
+			}
+		}
+
+		if root.NextNode != nil {
+			root = root.NextNode
+		} else {
+			continueLoop = false
+		}
 	}
-	logger.Info(AUTOLOAD_TAG + " : " + gp[AUTOLOAD_TAG][cfg.Name])
-	
-	return false
+
+	if !isAutoloadSet {
+		appendNextNewNode(root, AUTOLOAD_TAG, []string{AUTOLOAD_TAG, TAG})
+		root = root.NextNode
+		appendNextNewNode(root, cfg.Name+"="+pluginLine+BREAK_LINE, []string{AUTOLOAD_TAG, KEY_VALUE})
+		root = root.NextNode
+		isAutoloadSet = true
+		logger.Trace(AUTOLOAD_TAG + " tag created and " + pluginLine + " added.")
+	}
+
+	if !isEditorPluginSet {
+		appendNextNewNode(root, EDITOR_PLUGINS_TAG, []string{EDITOR_PLUGINS_TAG, TAG})
+		root = root.NextNode
+		appendNextNewNode(root, createPackedArrayString([]string{pluginLineCfg})+BREAK_LINE, []string{EDITOR_PLUGINS_TAG, KEY_VALUE})
+		isAutoloadSet = true
+		logger.Trace(EDITOR_PLUGINS_TAG + " tag created and " + pluginLineCfg + " added.")
+	}
+
+	return SaveGodotProjectFile(&head)
+}
+func replaceScriptWithCfgFromPath(path string) string {
+	var pluginSplitted []string = strings.Split(path, GODOT_PATH_SEPARATOR)
+	return strings.ReplaceAll(path, pluginSplitted[len(pluginSplitted)-1], PLUGIN_CFG_FILE) + "\""
+}
+func appendNextNewNode(nodes *LinkedList, data string, metadata []string) {
+	var newNode *LinkedList = new(LinkedList)
+	newNode.Data = data
+	newNode.Metadata = metadata
+	newNode.PreviousNode = nodes
+	nodes.NextNode = newNode
 }
 
+func appendPreviousNewNode(nodes *LinkedList, data string, metadata []string) {
+	var newNode *LinkedList = new(LinkedList)
+	newNode.Data = data
+	newNode.Metadata = metadata
+	newNode.NextNode = nodes
+	newNode.PreviousNode = nodes.PreviousNode
+	nodes.PreviousNode = newNode
+}
+
+func createPackedArrayString(content []string) string {
+	return PACKED_STRING_ARRAY_START + strings.Join(content, ",") + ")"
+}
+func getPackedArrayStringContents(str string) []string {
+	return strings.Split(strings.ReplaceAll(strings.ReplaceAll(str, PACKED_STRING_ARRAY_START, ""), ")", ""), ",")
+}
 func LoadCFGExtension(path string) (PluginConfig, error) {
 	file, err := file.GetFile(path, true)
 
@@ -91,14 +227,14 @@ func LoadCFGExtension(path string) (PluginConfig, error) {
 	}
 	var config PluginConfig
 	var hasPluginTag bool = false
-	for index, line := range strings.Split(string(file), "\n") {
+	for index, line := range strings.Split(string(file), BREAK_LINE) {
 		if index == 0 {
 			hasPluginTag = PLUGIN_TAG == strings.TrimSpace(line)
 		}
 		if !hasPluginTag {
-			return PluginConfig{}, errors.New("The file does not start with a plugin tag")
+			return PluginConfig{}, errors.New("the file does not start with a plugin tag")
 		}
-		if strings.HasPrefix(line, ";"){
+		if strings.HasPrefix(line, COMMENT_PREFIX) {
 			continue
 		}
 		var kv []string = strings.SplitN(line, "=", 2)
@@ -149,11 +285,4 @@ func isKeyValue(str string) bool {
 	}
 	var splittedKV []string = strings.SplitN(str, "=", 2)
 	return len(splittedKV) == 2
-}
-func LoadPluginConfig(path string) {
-	return
-}
-func getAutoloadTagLine() int {
-
-	return -1
 }
