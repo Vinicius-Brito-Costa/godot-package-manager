@@ -121,26 +121,10 @@ func ActivatePluginOnProject(pluginFolderPath string) bool {
 	var pluginLineCfg string = replaceScriptWithCfgFromPath(strings.ReplaceAll(pluginLine, "\"*res", "\"res"))
 	var continueLoop bool = true
 	var root *LinkedList = &head
-	var isAutoloadSet bool = false
 	var isEditorPluginSet bool = false
 	for continueLoop {
 		var tag string = root.Metadata[0]
 		if !strings.EqualFold(tag, root.Data) {
-			if !isAutoloadSet && strings.EqualFold(AUTOLOAD_TAG, tag) {
-				var valueType string = root.Metadata[1]
-				if len(root.Data) == 0 {
-					root.Data = cfg.Name + "=" + pluginLine
-					if root.NextNode != nil && len(root.NextNode.Data) > 0 {
-						root.Data += BREAK_LINE
-					}
-					isAutoloadSet = true
-					logger.Trace("Plugin registered on a blank line in " + AUTOLOAD_TAG)
-				} else if root.NextNode == nil || valueType == TAG {
-					appendPreviousNewNode(root, cfg.Name+"="+pluginLine+BREAK_LINE, []string{AUTOLOAD_TAG, KEY_VALUE})
-					isAutoloadSet = true
-					logger.Trace("Plugin registered on a new line in " + AUTOLOAD_TAG)
-				}
-			}
 
 			if !isEditorPluginSet && strings.EqualFold(EDITOR_PLUGINS_TAG, tag) {
 				var valueType string = root.Metadata[1]
@@ -172,20 +156,11 @@ func ActivatePluginOnProject(pluginFolderPath string) bool {
 		}
 	}
 
-	if !isAutoloadSet {
-		appendNextNewNode(root, AUTOLOAD_TAG, []string{AUTOLOAD_TAG, TAG})
-		root = root.NextNode
-		appendNextNewNode(root, cfg.Name+"="+pluginLine+BREAK_LINE, []string{AUTOLOAD_TAG, KEY_VALUE})
-		root = root.NextNode
-		isAutoloadSet = true
-		logger.Trace(AUTOLOAD_TAG + " tag created and " + pluginLine + " added.")
-	}
-
 	if !isEditorPluginSet {
 		appendNextNewNode(root, EDITOR_PLUGINS_TAG, []string{EDITOR_PLUGINS_TAG, TAG})
 		root = root.NextNode
 		appendNextNewNode(root, createPackedArrayString([]string{pluginLineCfg})+BREAK_LINE, []string{EDITOR_PLUGINS_TAG, KEY_VALUE})
-		isAutoloadSet = true
+		isEditorPluginSet = true
 		logger.Trace(EDITOR_PLUGINS_TAG + " tag created and " + pluginLineCfg + " added.")
 	}
 
