@@ -8,7 +8,10 @@ import (
 	"godot-package-manager/gpm/logger"
 	"io/fs"
 	"os"
+	"strings"
 )
+
+const BREAK_LINE = "\n"
 
 type GPProject struct {
 	Name         string `json:"name"`
@@ -64,6 +67,9 @@ func fileAppender(reader bufio.Reader, addLines bool) []byte {
 		if err != nil {
 			break
 		}
+	}
+	if addLines {
+		fileData = []byte(strings.TrimSuffix(string(fileData), BREAK_LINE))
 	}
 	return fileData
 }

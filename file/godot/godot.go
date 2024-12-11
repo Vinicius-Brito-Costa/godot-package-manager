@@ -6,7 +6,6 @@ import (
 	"godot-package-manager/gpm/file"
 	"godot-package-manager/gpm/logger"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -18,7 +17,6 @@ const GODOT_PROJECT_FILE = "project.godot"
 const GODOT_PLUGIN_RES_PATH = "*res://"
 const GODOT_PATH_SEPARATOR = "/"
 const COMMENT_PREFIX = ";"
-const BREAK_LINE = "\n"
 
 const KEY_VALUE string = "key-value"
 const TAG string = "tag"
@@ -55,9 +53,8 @@ func LoadGodotProjectFile() (LinkedList, error) {
 	var mappedValues *LinkedList = new(LinkedList)
 	var head = mappedValues
 	var currentConfigTag string = ""
-	var lineCount int = len(strings.Split(string(fileData), BREAK_LINE))
-	logger.Info(strconv.Itoa(lineCount))
-	for i, line := range strings.Split(string(fileData), BREAK_LINE) {
+	var lineCount int = len(strings.Split(string(fileData), file.BREAK_LINE))
+	for i, line := range strings.Split(string(fileData), file.BREAK_LINE) {
 		if strings.HasPrefix(line, COMMENT_PREFIX) {
 			mappedValues.Metadata = []string{COMMENT}
 		} else if isTag(line) && len(strings.TrimSpace(line)) > 2 {
@@ -85,7 +82,7 @@ func SaveGodotProjectFile(godotProject *LinkedList) bool {
 	var data string = ""
 	continueLoop := true
 	for continueLoop {
-		data += godotProject.Data + BREAK_LINE
+		data += godotProject.Data + file.BREAK_LINE
 		if godotProject.NextNode != nil {
 			godotProject = godotProject.NextNode
 		} else {
@@ -142,7 +139,7 @@ func ActivatePluginOnProject(pluginFolderPath string) bool {
 						logger.Trace("Plugin registered on " + EDITOR_PLUGINS_TAG)
 					}
 				} else if root.NextNode == nil || valueType == TAG {
-					appendPreviousNewNode(root, createPackedArrayString([]string{pluginLineCfg})+BREAK_LINE, []string{EDITOR_PLUGINS_TAG, KEY_VALUE})
+					appendPreviousNewNode(root, createPackedArrayString([]string{pluginLineCfg})+file.BREAK_LINE, []string{EDITOR_PLUGINS_TAG, KEY_VALUE})
 					isEditorPluginSet = true
 					logger.Trace("Plugin registered on a new line in " + EDITOR_PLUGINS_TAG)
 				}
@@ -159,7 +156,7 @@ func ActivatePluginOnProject(pluginFolderPath string) bool {
 	if !isEditorPluginSet {
 		appendNextNewNode(root, EDITOR_PLUGINS_TAG, []string{EDITOR_PLUGINS_TAG, TAG})
 		root = root.NextNode
-		appendNextNewNode(root, createPackedArrayString([]string{pluginLineCfg})+BREAK_LINE, []string{EDITOR_PLUGINS_TAG, KEY_VALUE})
+		appendNextNewNode(root, createPackedArrayString([]string{pluginLineCfg})+file.BREAK_LINE, []string{EDITOR_PLUGINS_TAG, KEY_VALUE})
 		isEditorPluginSet = true
 		logger.Trace(EDITOR_PLUGINS_TAG + " tag created and " + pluginLineCfg + " added.")
 	}
@@ -194,7 +191,7 @@ func getPackedArrayStringContents(str string) []string {
 	return strings.Split(strings.ReplaceAll(strings.ReplaceAll(str, PACKED_STRING_ARRAY_START, ""), ")", ""), ",")
 }
 func LoadCFGExtension(path string) (PluginConfig, error) {
-	file, err := file.GetFile(path, true)
+	data, err := file.GetFile(path, true)
 
 	if err != nil {
 		logger.Error(err.Error(), err)
@@ -202,7 +199,7 @@ func LoadCFGExtension(path string) (PluginConfig, error) {
 	}
 	var config PluginConfig
 	var hasPluginTag bool = false
-	for _, line := range strings.Split(string(file), BREAK_LINE) {
+	for _, line := range strings.Split(string(data), file.BREAK_LINE) {
 
 		if isTag(strings.TrimSpace(line)) {
 			hasPluginTag = strings.EqualFold(PLUGIN_TAG, strings.TrimSpace(line))
