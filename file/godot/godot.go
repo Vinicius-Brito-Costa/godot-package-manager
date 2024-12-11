@@ -6,6 +6,7 @@ import (
 	"godot-package-manager/gpm/file"
 	"godot-package-manager/gpm/logger"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -55,6 +56,7 @@ func LoadGodotProjectFile() (LinkedList, error) {
 	var head = mappedValues
 	var currentConfigTag string = ""
 	var lineCount int = len(strings.Split(string(fileData), BREAK_LINE))
+	logger.Info(strconv.Itoa(lineCount))
 	for i, line := range strings.Split(string(fileData), BREAK_LINE) {
 		if strings.HasPrefix(line, COMMENT_PREFIX) {
 			mappedValues.Metadata = []string{COMMENT}
@@ -125,7 +127,6 @@ func ActivatePluginOnProject(pluginFolderPath string) bool {
 	for continueLoop {
 		var tag string = root.Metadata[0]
 		if !strings.EqualFold(tag, root.Data) {
-
 			if !isEditorPluginSet && strings.EqualFold(EDITOR_PLUGINS_TAG, tag) {
 				var valueType string = root.Metadata[1]
 				if len(root.Data) > 0 {
@@ -140,7 +141,6 @@ func ActivatePluginOnProject(pluginFolderPath string) bool {
 						root.Data = createPackedArrayString(currentStringArray)
 						logger.Trace("Plugin registered on " + EDITOR_PLUGINS_TAG)
 					}
-
 				} else if root.NextNode == nil || valueType == TAG {
 					appendPreviousNewNode(root, createPackedArrayString([]string{pluginLineCfg})+BREAK_LINE, []string{EDITOR_PLUGINS_TAG, KEY_VALUE})
 					isEditorPluginSet = true
@@ -202,14 +202,13 @@ func LoadCFGExtension(path string) (PluginConfig, error) {
 	}
 	var config PluginConfig
 	var hasPluginTag bool = false
-	for index, line := range strings.Split(string(file), BREAK_LINE) {
-		if index == 0 {
-			hasPluginTag = PLUGIN_TAG == strings.TrimSpace(line)
+	for _, line := range strings.Split(string(file), BREAK_LINE) {
+
+		if isTag(strings.TrimSpace(line)) {
+			hasPluginTag = strings.EqualFold(PLUGIN_TAG, strings.TrimSpace(line))
 		}
-		if !hasPluginTag {
-			return PluginConfig{}, errors.New("the file does not start with a plugin tag")
-		}
-		if strings.HasPrefix(line, COMMENT_PREFIX) {
+
+		if len(line) == 0 || strings.HasPrefix(line, COMMENT_PREFIX) {
 			continue
 		}
 		var kv []string = strings.SplitN(line, "=", 2)
@@ -240,6 +239,10 @@ func LoadCFGExtension(path string) (PluginConfig, error) {
 				config.ActivateNow = true
 			}
 		}
+	}
+
+	if !hasPluginTag {
+		return PluginConfig{}, errors.New("the file does have a plugin tag")
 	}
 
 	logger.Trace("Parsed cfg file: " + fmt.Sprintf("%#v", config))
