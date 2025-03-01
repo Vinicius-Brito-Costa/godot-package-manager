@@ -13,7 +13,7 @@ const REPO = "repo: "
 const VERSION = "version: "
 
 type Repository interface {
-	Download(name string, version string, destiny string) bool
+	Download(plugin file.GPPlugin, destiny string) bool
 }
 
 var installCmd = &cobra.Command{
@@ -45,7 +45,7 @@ func executeInstallCommand(folder string) {
 func InstallDependency(dep file.GPPlugin) {
 	logger.Info("installing " + dep.Name + ":" + dep.Version)
 	var repo Repository = repository.GetRepository(dep.Repository)
-	if !repo.Download(dep.Name, dep.Version, "."+string(os.PathSeparator)+ADDONS) {
+	if !repo.Download(dep, "."+string(os.PathSeparator)+ADDONS) {
 		logger.Info("Cannot download " + dep.Name + ":" + dep.Version)
 	}
 }

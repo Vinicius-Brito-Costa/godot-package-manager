@@ -25,6 +25,7 @@ type GPPlugin struct {
 	Repository string `json:"repository"`
 	Name       string `json:"name"`
 	Version    string `json:"version"`
+	Config     any    `json:"config"`
 }
 type GodotPackage struct {
 	Project GPProject  `json:"project"`
