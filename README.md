@@ -15,6 +15,12 @@ With this you can eliminate the bloat of the addons folder on your repository an
   - [Installing dependencies](#installing-dependencies)
   - [Removing dependencies](#removing-dependencies)
 - [How does it work](#how-does-it-work)
+  - [1.a) Making the request](#1a-making-the-request)
+    - [Github:](#github)
+  - [1.b) Making an authenticated request](#1b-making-an-authenticated-request)
+    - [Config models:](#config-models)
+      - [Github:](#github-1)
+  - [2) Dealing with the files](#2-dealing-with-the-files)
 - [FAQ](#faq)
   - [Where's the logging folder located?](#wheres-the-logging-folder-located)
 
@@ -128,10 +134,51 @@ Example with a github repository:
 **name:** ramokz/phantom-camera  
 **version:** v0.8
 
+### <a name="how-dows-it-work-1.a"></a>1.a) Making the request
+
+#### Github:
 ```
 GET https://github.com/ramokz/phantom-camera/archive/refs/tags/v0.8.zip
 ```
 
+### 1.b) Making an authenticated request
+Now, if you want to download a plugin that's not available to the public you can add a config object to your ```godo-package.json``` file.
+
+Let's use the exemple from above, now with the configuration:
+
+```json
+{
+    "repository": "github",
+    "name": "ramokz/phantom-camera",
+    "version": "v0.8",
+    "config": {
+        "authentication": {
+            "token": "my_token"
+        }
+    }
+}
+```
+
+With this ```gpm``` will try to make an authenticated request to the repository **before** trying to download it via <a name="how-dows-it-work-1.a">1.a</a> method.
+
+#### Config models:
+
+##### Github:
+```json
+{
+    ...,
+    "config": {
+        "authentication": {
+            "token": "my_token"
+        }
+    }
+}
+```
+
+The token can be generated in https://github.com/settings/tokens
+**Remember:** the application only needs the **read access to code and metadata** permission.
+
+### 2) Dealing with the files
 Next it will unzip it and try to locate an ```addons``` folder, if it cannot find it, it will search for ```plugin.cfg``` to locate the folder in which the addon is.
 
 Then it will add it to the project ```addons``` folder and enable it in the Settings.
