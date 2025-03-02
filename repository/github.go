@@ -3,9 +3,11 @@ package repository
 import (
 	"archive/zip"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	copyUtil "godot-package-manager/gpm/copy"
+	"godot-package-manager/gpm/file"
 	"godot-package-manager/gpm/file/godot"
 	"godot-package-manager/gpm/logger"
 	"io"
@@ -18,19 +20,90 @@ import (
 
 type Github struct{}
 
-func (g Github) Download(name string, version string, destiny string) bool {
-	if len(name) == 0 || len(version) == 0 {
-		logger.Info("Cannot download. Name or Version missing. Name: " + name + " Version: " + version)
-		return false
+type GithubAuthentication struct {
+	Token string `json:"token"`
+}
+type GithubConfiguration struct {
+	Authentication GithubAuthentication `json:"authentication"`
+}
+type UrlTemplate struct {
+	Name    string
+	Version string
+	Package string
+}
+
+const API_URL_TEMPLATE string = "http://api.github.com/repos/{{.Name}}/zipball/{{.Version}}"
+
+var URL_TEMPLATES []string = []string{
+	"https://github.com/{{.Name}}/archive/refs/tags/{{.Version}}.zip",
+	"https://github.com/{{.Name}}/releases/download/{{.Version}}/{{.Package}}-{{.Version}}.zip",
+}
+
+func (g Github) Config(plugin *file.GPPlugin) *[]byte {
+	// TODO: Get config from global (environment variables, an glboal file with config)
+	if plugin == nil || plugin.Config == nil {
+		return nil
+	}
+	var arrObj, err = json.Marshal(plugin.Config)
+	if err != nil {
+		logger.Error("Cannot marshal plugin config.", err)
+		return nil
+	}
+	if len(arrObj) < 1 {
+		logger.Trace("There's no config on plugin")
+		return nil
 	}
 
-	var response, err = getUntil(name, version)
+	return &arrObj
+}
+
+func (g Github) Download(plugin file.GPPlugin, destiny string) bool {
+	if len(plugin.Name) == 0 || len(plugin.Version) == 0 {
+		logger.Info("Cannot download. Name or Version missing. Name: " + plugin.Name + " Version: " + plugin.Version)
+		return false
+	}
+	var response *http.Response
+	var err error
+	var config = g.Config(&plugin)
+	var githubConfig GithubConfiguration
+	var hasAuth bool = false
+
+	if config != nil {
+		err = json.Unmarshal(*config, &githubConfig)
+		if err == nil {
+			hasAuth = true
+		} else {
+			logger.Warn("Cannot parse config for " + plugin.Name + " error: " + err.Error())
+			// Explicity setting err to nil even when the next code block will override it
+			// Why? In the future, the next code block could be changed and
+			// the knowledge that the err needs to be null can be forgotten,
+			// this can cause various bugs and would be hard to debug it.
+			err = nil
+		}
+	}
+
+	if hasAuth {
+		response, err = getWithAuthentication(plugin.Name, plugin.Version, &githubConfig)
+		if err != nil {
+			logger.Error("Github api call failed.", err)
+			err = nil
+		}
+	}
+
+	// If the authenticated call fails, we will try to get it
+	// with an unauthenticated call either way.
+	if response == nil {
+		response, err = getUntil(plugin.Name, plugin.Version)
+	}
 
 	if err != nil {
 		logger.Error(err.Error(), err)
 		return false
 	}
 
+	if response == nil {
+		return false
+	}
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		logger.Error(err.Error(), err)
@@ -48,7 +121,7 @@ func (g Github) Download(name string, version string, destiny string) bool {
 	for _, zipFile := range zipReader.File {
 
 		// Search for the folder that contains the plugin.cfg file
-		if strings.Contains(zipFile.Name, "plugin.cfg") {
+		if strings.Contains(zipFile.Name, godot.PLUGIN_CFG_FILE) {
 			if len(folderWithFiles) == 0 {
 				folderWithFiles = filepath.Dir(zipFile.Name)
 			}
@@ -70,6 +143,10 @@ func (g Github) Download(name string, version string, destiny string) bool {
 
 	logger.Trace("Folder with files: " + folderWithFiles)
 
+	if len(folderWithFiles) < 1 {
+		logger.Trace("Plugin " + plugin.Name + plugin.Version + " does not have an " + godot.PLUGIN_CFG_FILE + " file.")
+		return false
+	}
 	var split = strings.Split(folderWithFiles, string(os.PathSeparator))
 	var current string = destiny + string(os.PathSeparator) + folderWithFiles
 	var target string = destiny + string(os.PathSeparator) + split[len(split)-1]
@@ -112,15 +189,41 @@ func extract(f *zip.File, dest string) error {
 	return nil
 }
 
-type UrlTemplate struct {
-	Name    string
-	Version string
-	Package string
-}
+func getWithAuthentication(name string, version string, config *GithubConfiguration) (*http.Response, error) {
+	var tmpl, err = template.New("api-temp-template-github").Parse(API_URL_TEMPLATE)
+	if err != nil {
+		logger.Trace("Cannot create api url template. " + API_URL_TEMPLATE)
+		return nil, err
+	}
 
-var URL_TEMPLATES []string = []string{
-	"https://github.com/{{.Name}}/archive/refs/tags/{{.Version}}.zip",
-	"https://github.com/{{.Name}}/releases/download/{{.Version}}/{{.Package}}-{{.Version}}.zip",
+	var url bytes.Buffer
+	err = tmpl.Execute(&url, UrlTemplate{name, version, name})
+	if err != nil {
+		logger.Trace("Cannot apply api template (" + url.String() + "). Err: " + err.Error())
+		return nil, err
+	}
+
+	var client = &http.Client{}
+	var req *http.Request
+	req, err = http.NewRequest("GET", url.String(), nil)
+	req.Header.Set("Authorization", "Bearer "+config.Authentication.Token)
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	req.Header.Set("accept", "application/vnd.github+json")
+
+	var resp *http.Response
+	resp, err = client.Do(req)
+	if err != nil {
+		logger.Trace("Cannot download with url (" + url.String() + "). Err: " + err.Error())
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		logger.Warn("GET request on " + url.String() + " failed. Status: " + resp.Status)
+		return nil, nil
+	}
+	err = nil
+	logger.Trace("Successfuly downloaded " + name + ":" + version)
+	return resp, err
 }
 
 // This will loop over the URL_TEMPLATES looking for a positive. If it cannot find anything, will return error.
@@ -138,7 +241,12 @@ func getUntil(name string, version string) (*http.Response, error) {
 		}
 
 		var buff bytes.Buffer
-		tmpl.Execute(&buff, urlTmpl)
+		tmplErr = tmpl.Execute(&buff, urlTmpl)
+		if tmplErr != nil {
+			logger.Trace("Cannot apply template (" + url + "). Err: " + tmplErr.Error())
+			responseErr = tmplErr
+			continue
+		}
 		resp, reqErr := http.Get(buff.String())
 
 		if reqErr != nil {
@@ -149,9 +257,6 @@ func getUntil(name string, version string) (*http.Response, error) {
 
 		if resp.StatusCode != 200 {
 			logger.Warn("GET request on " + buff.String() + " failed. Status: " + resp.Status)
-			if index < len(URL_TEMPLATES) {
-				logger.Trace("Trying to GET on the next template. " + URL_TEMPLATES[index+1])
-			}
 			responseErr = errors.New("GET request on " + buff.String() + " failed.")
 			continue
 		}

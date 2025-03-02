@@ -17,6 +17,16 @@
             "repository": "github",
             "name": "Burloe/GoLogger",
             "version": "1.2"
+        },
+        {
+            "repository": "github",
+            "name": "Vinicius-Brito-Costa/Digimon-Pomodoro",
+            "version": "1.0.0",
+            "config": {
+                "authentication": {
+                    "token": "token"
+                }
+            }
         }
     ]
 }

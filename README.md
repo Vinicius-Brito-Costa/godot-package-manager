@@ -14,7 +14,10 @@ With this you can eliminate the bloat of the addons folder on your repository an
   - [Add dependencies](#add-dependencies)
   - [Installing dependencies](#installing-dependencies)
   - [Removing dependencies](#removing-dependencies)
-- [How does it work](#how-does-it-work)
+- [How does it work?](#how-does-it-work)
+  - [1) Getting the files](#1-getting-the-files)
+    - [Github: Getting the files](#github-getting-the-files)
+  - [2) Dealing with the files](#2-dealing-with-the-files)
 - [FAQ](#faq)
   - [Where's the logging folder located?](#wheres-the-logging-folder-located)
 
@@ -118,7 +121,17 @@ gpm remove name
 This will remove the dependency from the ```addons``` folder and remove it in the settings.
 
 
-## <a name="how-dows-it-work"></a>How does it work
+## <a name="how-dows-it-work-?"></a>How does it work?
+
+
+### 1) Getting the files
+
+Each repository will try in a different way to get the files, search bellow for your current repository and see how ```gpm``` deals with it.
+
+#### <a name="github-getting-the-files"></a>Github: Getting the files
+<details>
+<summary>Details</summary>
+<br>
 
 The ```gpm``` will try to access the repository with the given name and search for a release with the version.
 
@@ -128,10 +141,53 @@ Example with a github repository:
 **name:** ramokz/phantom-camera  
 **version:** v0.8
 
+**1.a)** Making the request
+
 ```
 GET https://github.com/ramokz/phantom-camera/archive/refs/tags/v0.8.zip
 ```
 
+**1.b)** Making an authenticated request
+Now, if you want to download a plugin that's not available to the public you can add a config object to your ```godo-package.json``` file.
+
+Let's use the exemple from above, now with the configuration:
+
+```json
+{
+    "repository": "github",
+    "name": "ramokz/phantom-camera",
+    "version": "v0.8",
+    "config": {
+        "authentication": {
+            "token": "my_token"
+        }
+    }
+}
+```
+
+With this ```gpm``` will try to make an authenticated request to the repository **before** trying to download it via **1.a**.
+
+**Config model:**
+
+```json
+{
+    "repository": "github",
+    ...
+    "config": {
+        "authentication": {
+            "token": "my_token"
+        }
+    }
+}
+```
+
+The token can be generated in https://github.com/settings/tokens
+**Remember:** the application only needs the **read access to code and metadata** permission.
+</details>
+
+
+
+### 2) Dealing with the files
 Next it will unzip it and try to locate an ```addons``` folder, if it cannot find it, it will search for ```plugin.cfg``` to locate the folder in which the addon is.
 
 Then it will add it to the project ```addons``` folder and enable it in the Settings.

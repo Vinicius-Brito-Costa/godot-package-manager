@@ -94,27 +94,27 @@ func SaveGodotProjectFile(godotProject *LinkedList) bool {
 		return false
 	}
 
-	logger.Info("Succesfully updated " + GODOT_PROJECT_FILE)
+	logger.Trace("Succesfully updated " + GODOT_PROJECT_FILE)
 
 	return true
 }
 
 func ActivatePluginOnProject(pluginFolderPath string) bool {
-	logger.Info("Setting the plugin up..")
+	logger.Trace("Setting the plugin up..")
 	logger.Trace("Path to plugin: " + pluginFolderPath)
 	cfg, err := LoadCFGExtension(pluginFolderPath + string(os.PathSeparator) + PLUGIN_CFG_FILE)
 	if err != nil {
 		logger.Error("Cannot load "+PLUGIN_CFG_FILE, err)
 		return false
 	}
-	logger.Info("Loaded " + PLUGIN_CFG_FILE)
+	logger.Trace("Loaded " + PLUGIN_CFG_FILE)
 
 	head, err := LoadGodotProjectFile()
 	if err != nil {
 		logger.Error("Cannot load "+GODOT_PROJECT_FILE, err)
 		return false
 	}
-	logger.Info("Loaded " + GODOT_PROJECT_FILE)
+	logger.Trace("Loaded " + GODOT_PROJECT_FILE)
 
 	var pluginLine string = "\"" + GODOT_PLUGIN_RES_PATH + strings.ReplaceAll(strings.ReplaceAll(pluginFolderPath, "."+string(os.PathSeparator), ""), string(os.PathSeparator), GODOT_PATH_SEPARATOR) + GODOT_PATH_SEPARATOR + cfg.Script + "\""
 	var pluginLineCfg string = replaceScriptWithCfgFromPath(strings.ReplaceAll(pluginLine, "\"*res", "\"res"))

@@ -34,16 +34,12 @@ var traceLog log.Logger = *log.New(os.Stdout, "[TRACE][DATE_TIME=", log.Ldate|lo
 var errorLog log.Logger = *log.New(os.Stderr, "[ERROR][DATE_TIME=", log.Ldate|log.Ltime)
 
 func setLoggerOutputToFile(logger *log.Logger) os.File {
-	if len(gpmFolder) == 0 {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			fmt.Println("cannot get user home directory", err)
-			return os.File{}
-		}
-		gpmFolder = filepath.Join(homeDir, ".godot-package-manager")
+	var dir, err = GetLogDir()
+	if err != nil {
+		return os.File{}
 	}
-	_ = os.Mkdir(gpmFolder, os.ModePerm)
-	var logWriter, err = os.OpenFile(filepath.Join(gpmFolder, logFileName), os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	_ = os.Mkdir(dir, os.ModePerm)
+	logWriter, err := os.OpenFile(filepath.Join(dir, logFileName), os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Error on openFile: " + err.Error())
 		return os.File{}
@@ -51,6 +47,18 @@ func setLoggerOutputToFile(logger *log.Logger) os.File {
 
 	logger.SetOutput(logWriter)
 	return *logWriter
+}
+
+func GetLogDir() (string, error) {
+	if len(gpmFolder) == 0 {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			fmt.Println("Cannot get user home directory", err)
+			return "", err
+		}
+		gpmFolder = filepath.Join(homeDir, ".godot-package-manager")
+	}
+	return gpmFolder, nil
 }
 
 func Info(str string){
