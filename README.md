@@ -165,13 +165,14 @@ Let's use the exemple from above, now with the configuration:
 }
 ```
 
-With this ```gpm``` will try to make an authenticated request to the repository **before** trying to download it via <a name="how-dows-it-work-1.a">1.a</a> method.
+With this ```gpm``` will try to make an authenticated request to the repository **before** trying to download it via **1.a**.
 
 **Config model:**
 
 ```json
 {
-    ...,
+    "repository": "github",
+    ...
     "config": {
         "authentication": {
             "token": "my_token"
