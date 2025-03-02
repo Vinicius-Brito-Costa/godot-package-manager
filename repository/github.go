@@ -70,12 +70,29 @@ func (g Github) Download(plugin file.GPPlugin, destiny string) bool {
 
 	if config != nil {
 		err = json.Unmarshal(*config, &githubConfig)
-		hasAuth = true
+		if err == nil {
+			hasAuth = true
+		} else {
+			logger.Warn("Cannot parse config for " + plugin.Name + " error: " + err.Error())
+			// Explicity setting err to nil even when the next code block will override it
+			// Why? In the future, the next code block could be changed and
+			// the knowledge that the err needs to be null can be forgotten,
+			// this can cause various bugs and would be hard to debug it.
+			err = nil
+		}
 	}
 
-	if err == nil && hasAuth {
+	if hasAuth {
 		response, err = getWithAuthentication(plugin.Name, plugin.Version, &githubConfig)
-	} else {
+		if err != nil {
+			logger.Error("Github api call failed.", err)
+			err = nil
+		}
+	}
+
+	// If the authenticated call fails, we will try to get it
+	// with an unauthenticated call either way.
+	if response == nil {
 		response, err = getUntil(plugin.Name, plugin.Version)
 	}
 
@@ -104,7 +121,7 @@ func (g Github) Download(plugin file.GPPlugin, destiny string) bool {
 	for _, zipFile := range zipReader.File {
 
 		// Search for the folder that contains the plugin.cfg file
-		if strings.Contains(zipFile.Name, "plugin.cfg") {
+		if strings.Contains(zipFile.Name, godot.PLUGIN_CFG_FILE) {
 			if len(folderWithFiles) == 0 {
 				folderWithFiles = filepath.Dir(zipFile.Name)
 			}
@@ -127,6 +144,7 @@ func (g Github) Download(plugin file.GPPlugin, destiny string) bool {
 	logger.Trace("Folder with files: " + folderWithFiles)
 
 	if len(folderWithFiles) < 1 {
+		logger.Trace("Plugin " + plugin.Name + plugin.Version + " does not have an " + godot.PLUGIN_CFG_FILE + " file.")
 		return false
 	}
 	var split = strings.Split(folderWithFiles, string(os.PathSeparator))
@@ -201,7 +219,7 @@ func getWithAuthentication(name string, version string, config *GithubConfigurat
 
 	if resp.StatusCode != 200 {
 		logger.Warn("GET request on " + url.String() + " failed. Status: " + resp.Status)
-		return nil, err
+		return nil, nil
 	}
 	err = nil
 	logger.Trace("Successfuly downloaded " + name + ":" + version)

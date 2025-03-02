@@ -46,9 +46,11 @@ func InstallDependency(dep file.GPPlugin) {
 	logger.Info("installing " + dep.Name + ":" + dep.Version)
 	var repo Repository = repository.GetRepository(dep.Repository)
 	if !repo.Download(dep, "."+string(os.PathSeparator)+ADDONS) {
-		logger.Info("Cannot download " + dep.Name + ":" + dep.Version)
+		var logDir, _ = logger.GetLogDir()
+		logger.Info("Cannot download " + dep.Name + ":" + dep.Version + ". Check logs at: " + logDir)
 	}
 }
+
 // Who knows in the future...
 func checkPluginDependencies() {}
 
