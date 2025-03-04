@@ -22,3 +22,6 @@ go.work
 /addons
 test-package.json
 cmd/base.go
+.vscode
+*.dmg
+gpm-linux-arm

@@ -53,8 +53,9 @@ func LoadGodotProjectFile() (LinkedList, error) {
 	var mappedValues *LinkedList = new(LinkedList)
 	var head = mappedValues
 	var currentConfigTag string = ""
-	var lineCount int = len(strings.Split(string(fileData), file.BREAK_LINE))
-	for i, line := range strings.Split(string(fileData), file.BREAK_LINE) {
+	var stringFileData string = string(fileData)
+	var lineCount int = len(strings.Split(stringFileData, file.BREAK_LINE))
+	for i, line := range strings.Split(stringFileData, file.BREAK_LINE) {
 		if strings.HasPrefix(line, COMMENT_PREFIX) {
 			mappedValues.Metadata = []string{COMMENT}
 		} else if isTag(line) && len(strings.TrimSpace(line)) > 2 {
@@ -82,12 +83,13 @@ func SaveGodotProjectFile(godotProject *LinkedList) bool {
 	var data string = ""
 	continueLoop := true
 	for continueLoop {
-		data += godotProject.Data + file.BREAK_LINE
+		data += godotProject.Data
 		if godotProject.NextNode != nil {
+			data += file.BREAK_LINE
 			godotProject = godotProject.NextNode
-		} else {
-			continueLoop = false
+			continue
 		}
+		continueLoop = false
 	}
 	if !file.WriteToFile("." + string(os.PathSeparator) + GODOT_PROJECT_FILE, []byte(data)) {
 		logger.Trace("Cannot write updates to file...")

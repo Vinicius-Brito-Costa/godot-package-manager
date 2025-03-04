@@ -35,6 +35,12 @@ env GOOS=linux GOARCH=arm go build  # for linux
 env GOOS=darwin GOARCH=arm64 go build  # for mac
 ```
 
+**OR**
+
+```shell
+sh build.sh
+```
+
 Now it should have a `gpm` executable in the folder, you can add it to you path and use it anywhere!
 
 **OR**
